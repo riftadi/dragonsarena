@@ -482,5 +482,5 @@ class Game(object):
 #################################################################
 if __name__ == '__main__':
     print "starting dragons arena.."
-    Game(100, 20, 50)
+    Game(10, 2, 100)
     print "game end.."
