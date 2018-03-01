@@ -247,11 +247,11 @@ class TSSEngine(Thread):
 
     def is_game_finished(self):
         gb = self.leadingstate.get_gameboard()
-        if gb.get_dragon_count() == 0 and gb.get_human_count() > 0:
+        if gb.get_dragon_count() <= 0 and gb.get_human_count() > 0:
             print "humans win!"
             self.stop_game()
             return True
-        elif gb.get_dragon_count() > 0 and gb.get_human_count() == 0:
+        elif gb.get_dragon_count() > 0 and gb.get_human_count() <= 0:
             print "dragons win!"
             self.stop_game()
             return True
@@ -343,7 +343,7 @@ class Character(object):
         self.ap = ap
         self.gameboard = gameboard
         self.type = char_type
-        self.random_delay = randint(200,500)
+        self.random_delay = randint(300,1000)
         self.verbose = verbose
 
         if x == -1 or y == -1:
@@ -743,6 +743,10 @@ class GUIDisplay(object):
             self.msg_box.put_message(msg)
             self.plist.append(self.server_id+self.pl_id)
             self.pl_id += 1
+
+        # wait a few moment for the TSSengine to create the characters
+        print "initializing bots.."
+        pygame.time.wait(100)
 
         self.blist = []
         for i in xrange(nhuman):
