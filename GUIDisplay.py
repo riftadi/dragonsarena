@@ -1,4 +1,5 @@
 import pygame
+import json
 
 # Introducing some (bad) global variables for pygame screen..
 # Define some colors
@@ -44,6 +45,9 @@ class GUIDisplay(object):
                     self.quit_flag = True
             self.screen.fill(BLACK)
          
+            # get gameboard, should come from remote
+            gameboard = json.loads(self.gamestate.get_object())
+
             # Draw the grid
             for row in xrange(25):
                 for column in xrange(25):
@@ -53,12 +57,12 @@ class GUIDisplay(object):
                                       (MARGIN + WIDTH) * column + MARGIN,
                                       HEIGHT,
                                       WIDTH])
-                    obj = self.gamestate.get_object(row, column)
+                    obj = gameboard[row][column]
                     if obj != None:
-                        if obj.get_type() == 'h':
+                        if obj == 'h':
                             self.screen.blit(self.im_human, ((MARGIN + HEIGHT) * row + MARGIN,
                                               (MARGIN + WIDTH) * column + MARGIN))
-                        elif obj.get_type() == 'd':
+                        elif obj == 'd':
                             self.screen.blit(self.im_dragon, ((MARGIN + HEIGHT) * row + MARGIN,
                                               (MARGIN + WIDTH) * column + MARGIN))
          

@@ -124,7 +124,7 @@ class TSSEngine(Thread):
     def get_message_box(self):
         return self.msg_box
 
-    def get_object(self, x, y):
+    def get_object(self, x=None, y=None):
         return self.leadingstate.get_object(x,y)
 
     def get_width(self):

@@ -1,3 +1,6 @@
+import json
+import json_encoder
+
 class GameBoard(object):
     """
         The board of the game, default size is 25x25
@@ -26,7 +29,9 @@ class GameBoard(object):
 
         self.gameboard[x][y] = obj
 
-    def get_object(self, x, y):
+    def get_object(self, x=None, y=None):
+        if x == None or y == None:
+            return json.dumps(self.gameboard, cls=json_encoder.CustomEncoder)
         return self.gameboard[x][y]
 
     def get_width(self):

@@ -24,7 +24,7 @@ class GameState(object):
     def get_gameboard(self):
         return self.gb
 
-    def get_object(self, x, y):
+    def get_object(self, x=None, y=None):
         return self.gb.get_object(x, y)
 
     def add_action(self, action):
