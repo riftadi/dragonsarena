@@ -6,7 +6,7 @@ class GameBoard(object):
         The board of the game, default size is 25x25
     """
 
-    def __init__(self, width=25, height=25):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         self.human_count = 0
@@ -29,9 +29,7 @@ class GameBoard(object):
 
         self.gameboard[x][y] = obj
 
-    def get_object(self, x=None, y=None):
-        if x == None or y == None:
-            return json.dumps(self.gameboard, cls=json_encoder.CustomEncoder)
+    def get_object(self, x, y):
         return self.gameboard[x][y]
 
     def get_width(self):

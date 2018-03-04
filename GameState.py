@@ -4,7 +4,7 @@ class GameState(object):
     """
         Container class for characters and gameboard
     """
-    def __init__(self, width, height):
+    def __init__(self, width=25, height=25):
         self.gb = GameBoard(width, height)
         self.character_list = []
         self.action_list = []
@@ -15,6 +15,12 @@ class GameState(object):
     def get_characters(self):
         return self.character_list
 
+    def set_characters_list(self, list):
+        self.character_list = list
+
+    def set_gameboard(self, gb):
+        self.gb = gb
+
     def add_character(self, obj):
         self.character_list.append(obj)
 
@@ -24,7 +30,7 @@ class GameState(object):
     def get_gameboard(self):
         return self.gb
 
-    def get_object(self, x=None, y=None):
+    def get_object(self, x, y):
         return self.gb.get_object(x, y)
 
     def add_action(self, action):

@@ -1,8 +1,20 @@
+import zmq
+import json
+
+context = zmq.Context()
+
 class UnifiedMessageBox(object):
-    def __init__(self):
+    def __init__(self, server=False):
         self.message_box = []
         self.server_id = 1
         self.msg_counter = 1
+        self.server = server
+        if server == True:
+            self.socket = context.socket(zmq.PUB)
+            self.socket.bind("tcp://127.0.0.1:4999")
+        else:
+            self.socket = context.socket(zmq.REQ)
+            self.socket.connect("tcp://127.0.0.1:5555")
 
     def get_list_len(self):
         return len(self.message_box)
@@ -30,3 +42,20 @@ class UnifiedMessageBox(object):
         input_dict["msg_id"] = self.server_id * 10000 + self.msg_counter
         self.msg_counter += 1
         self.message_box.append(input_dict)
+
+    def send_message(self, message, topic=None):
+        if isinstance(message, dict):
+            message["msg_id"] = self.server_id * 10000 + self.msg_counter
+            self.msg_counter += 1
+            json_message = json.dumps(message)
+        if isinstance(message, str):
+            json_message = message
+
+        if self.server == True:
+            self.socket.send_multipart([topic, json_message])
+            print "Sended [ %s ] %s" % (topic, json_message)
+        else:
+            self.socket.send(json_message)
+            response = self.socket.recv()
+            print "Received reply %s [ %s ]" % (json_message, response)
+        
