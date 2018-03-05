@@ -1,8 +1,5 @@
 from random import randint
 
-MIN_DELAY = 300
-MAX_DELAY = 800
-
 class Character(object):
     def __init__(self, obj_id, name, gameboard, hp, ap, x, y, char_type, verbose=True):
         self.obj_id = obj_id
@@ -12,7 +9,6 @@ class Character(object):
         self.ap = ap
         self.gameboard = gameboard
         self.type = char_type
-        self.random_delay = randint(MIN_DELAY,MAX_DELAY)
         self.verbose = verbose
 
         if x == -1 or y == -1:
@@ -54,9 +50,6 @@ class Character(object):
 
     def get_type(self):
         return self.type
-
-    def get_random_delay(self):
-        return self.random_delay
 
     def is_alive(self):
         return self.hp > 0

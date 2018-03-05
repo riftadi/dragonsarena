@@ -2,51 +2,102 @@ from random import randint
 from threading import Thread
 import pygame
 
+from GameState import GameState
+
+import time
+
+
+MIN_DELAY = 300
+MAX_DELAY = 800
+
 class Bot(Thread):
-    def __init__(self, obj_id, gamestate, msg_box, verbose):
+    def __init__(self, obj_id, msg_box, verbose):
         Thread.__init__(self)
         self.obj_id = obj_id
-        self.gamestate = gamestate
+        self.gamestate = GameState() 
         self.verbose = verbose
         self.msg_box = msg_box
         self.obj = None
+        self.seen_dragons = 0
+        self.seen_humans = 0
+        self.done = False
 
-        while self.obj == None:
-            self.obj = self.gamestate.get_object_by_id(self.obj_id)
+        self.random_delay = randint(MIN_DELAY,MAX_DELAY)
 
-        self.random_delay = self.obj.get_random_delay()
 
     def do_best_action(self):
         pass
 
+    def is_done(self):
+        if self.done == True:
+            print ("Done")
+        return self.done
+
+    def update_gamestate(self, gamestate):
+        gb = gamestate.get_gameboard()
+        if gb.get_human_count() > self.seen_humans:
+            self.seen_humans = gb.get_human_count()
+        if gb.get_dragon_count() > self.seen_dragons:
+            self.seen_dragons = gb.get_dragon_count()
+
+        self.gamestate = gamestate
+
     def run(self):
-        while self.obj.is_alive() and self.gamestate.is_game_running():
-            self.do_best_action()
+        #wait till character object is set
+        while self.obj == None:
+            self.obj = self.gamestate.get_object_by_id(self.obj_id)
+        #run bot actions
+        while self.obj.is_alive() and self.game_still_running():
+            # update obj
+            self.obj = self.gamestate.get_object_by_id(self.obj_id)
+            if self.obj is not None:
+                self.do_best_action()
             pygame.time.wait(self.random_delay)
+
+        self.done = True
+    
+    def game_still_running(self):
+        gb = self.gamestate.get_gameboard()
+        if self.seen_dragons < 1 or self.seen_humans < 1:
+            return True
+
+        if gb.get_dragon_count() <= 0 and gb.get_human_count() > 0:
+            print "humans win!"
+            return False
+        elif gb.get_dragon_count() > 0 and gb.get_human_count() <= 0:
+            print "dragons win!"
+            return False
+
+        return True
 
     def calculate_distance(self, target_x, target_y):
         # cityblock distance
         return abs(self.obj.get_x() - target_x) + abs(self.obj.get_y() - target_y)
 
     def heal_target(self, target_obj):
-
-        msg = {"timestamp" : self.gamestate.get_current_time(), "type" : "heal", "obj_id" : self.obj.get_obj_id(),
-                 "server_id" : 10000, "target_id" : target_obj.get_obj_id(), "ap" : self.obj.get_ap()}
-        self.msg_box.put_message(msg)
+        msg = {
+            "type" : "heal",
+            "player_id" : self.obj.get_obj_id(),
+            "target_id" : target_obj.get_obj_id(),
+        }
+        self.msg_box.send_message(msg)
 
     def attack_target(self, target_obj):
-
-        msg = {"timestamp" : self.gamestate.get_current_time(), "type" : "attack", "obj_id" : self.obj.get_obj_id(),
-                "server_id" : 10000, "target_id" : target_obj.get_obj_id(), "ap" : self.obj.get_ap()}
-        self.msg_box.put_message(msg)
+        msg = {
+            "type" : "attack",
+            "player_id" : self.obj.get_obj_id(),
+            "target_id" : target_obj.get_obj_id(),
+        }
+        self.msg_box.send_message(msg)
 
 class HumanBot(Bot):
-    def __init__(self, obj, gamestate, msg_box, verbose=True):
-        Bot.__init__(self, obj, gamestate, msg_box, verbose)
-
+    def __init__(self, obj_id, msg_box, verbose=True):
+        Bot.__init__(self, obj_id, msg_box, verbose)
 
     def do_best_action(self):
-        if self.obj.is_alive():
+        if self.obj is None:
+            return
+        if self.obj.is_alive():     
             if self.verbose: print "\n%s's (%d, %d) turn" % (self.obj.get_name(), self.obj.get_x(), self.obj.get_y())
             is_dragon_exist, dragon = self.find_nearest_dragon()
 
@@ -73,9 +124,13 @@ class HumanBot(Bot):
                         self.move_to(new_x, new_y)
 
     def move_to(self, new_x, new_y):
-        msg = {"timestamp" : self.gamestate.get_current_time(), "type" : "move", "obj_id" : self.obj.get_obj_id(),
-                 "server_id" : 10000, "x" : new_x, "y" : new_y}
-        self.msg_box.put_message(msg)
+        msg = {
+            "type" : "move",
+            "player_id" : self.obj.get_obj_id(),
+            "x" : new_x,
+            "y" : new_y
+        }
+        self.msg_box.send_message(msg)
 
     def find_nearest_dragon(self):
         nearest_dist = 99999
@@ -165,10 +220,12 @@ class HumanBot(Bot):
         return x, y
 
 class DragonBot(Bot):
-    def __init__(self, obj, gamestate, msg_box, verbose=True):
-        Bot.__init__(self, obj, gamestate, msg_box, verbose)
+    def __init__(self, obj_id, msg_box, verbose=True):
+        Bot.__init__(self, obj_id, msg_box, verbose)
 
     def do_best_action(self):
+        if self.obj is None:
+            return
         if self.obj.is_alive():
             if self.verbose: print "\n%s's (%d, %d) turn" % (self.obj.get_name(), self.obj.get_x(), self.obj.get_y())
             is_prey_exist, prey = self.find_nearest_human()

@@ -1,5 +1,8 @@
 from threading import Thread
 import pygame
+import json
+
+from json_encoder import GameStateEncoder, GameStateParser
 
 from GameBoard import GameBoard
 from GameState import GameState
@@ -24,6 +27,9 @@ class TSSEngine(Thread):
         self.game_running_flag = True
         self.last_msg_box_access_time = 0
 
+        self.dragons_joined = 0
+        self.humans_joined = 0
+
         self.trailing_timer1 = -100
 
         self.human_count = 0
@@ -41,9 +47,15 @@ class TSSEngine(Thread):
             pygame.time.wait(self.clockrate)
             self.game_timer += self.clockrate
 
+            # publish current gamestate
+            json_str = json.dumps(self.leadingstate, cls=GameStateEncoder)
+            self.msg_box.send_message(json_str, "gamestate")
+
             # clear message_box every 300 ms
             if self.game_timer % 300 == 0:
                 mb.delete_messages_before(self.game_timer)
+
+        self.msg_box.send_message("Over", "game over")
 
     def get_list_of(self, c):
         return self.leadingstate.get_gameboard().get_list_of(c)
@@ -60,25 +72,22 @@ class TSSEngine(Thread):
             msg_id = action["msg_id"]
             timestamp = action["timestamp"]
             action_type = action["type"]
-            server_id = action["server_id"]
-            obj_id = action["obj_id"]
+            #server_id = action["#server_id"]
+            obj_id = action["player_id"]
 
             # now do the action
             if action_type == "spawn":
                 # create a new character
-                obj_name = action["obj_name"]
-                obj_type = action["obj_type"]
-
-                # x = action["x"]
-                # y = action["y"]
-                # hp = action["hp"]
-                # ap = action["ap"]
+                obj_name = "name" #action["obj_name"]
+                obj_type = action["player_type"]
 
                 new_obj = None
-                if obj_type == 'h':
+                if obj_type == 'human':
+                    self.humans_joined += 1
                     new_obj = Human(obj_id, obj_name, self.leadingstate.get_gameboard(),
                         verbose=self.verbose)
-                elif obj_type == 'd':
+                elif obj_type == 'dragon':
+                    self.dragons_joined += 1
                     new_obj = Dragon(obj_id, obj_name, self.leadingstate.get_gameboard(),
                         verbose=self.verbose)
 
@@ -86,9 +95,9 @@ class TSSEngine(Thread):
 
             elif action_type == "move":
                 # move a character
-                server_id = action["server_id"]
+                #server_id = action["#server_id"]
 
-                obj_id = action["obj_id"]
+                obj_id = action["player_id"]
 
                 x = action["x"]
                 y = action["y"]
@@ -98,9 +107,9 @@ class TSSEngine(Thread):
 
             elif action_type == "attack":
                 # attack a character
-                server_id = action["server_id"]
+                #server_id = action["#server_id"]
 
-                obj_id = action["obj_id"]
+                obj_id = action["player_id"]
                 target_id = action["target_id"]
 
                 obj = self.leadingstate.get_object_by_id(obj_id)
@@ -109,7 +118,7 @@ class TSSEngine(Thread):
 
             elif action_type == "heal":
                 # heal a character
-                server_id = action["server_id"]
+                #server_id = action["#server_id"]
 
                 obj_id = action["obj_id"]
                 target_id = action["target_id"]
@@ -124,7 +133,7 @@ class TSSEngine(Thread):
     def get_message_box(self):
         return self.msg_box
 
-    def get_object(self, x, y):
+    def get_object(self, x=None, y=None):
         return self.leadingstate.get_object(x,y)
 
     def get_width(self):
@@ -137,7 +146,7 @@ class TSSEngine(Thread):
         return self.game_timer
 
     def is_game_running(self):
-        return self.game_running_flag
+        return not self.is_game_finished()
 
     def stop_game(self):
         self.game_running_flag = False
@@ -162,13 +171,15 @@ class TSSEngine(Thread):
 
     def is_game_finished(self):
         gb = self.leadingstate.get_gameboard()
+
+        if self.dragons_joined < 1 or self.humans_joined < 1:
+            return False
+
         if gb.get_dragon_count() <= 0 and gb.get_human_count() > 0:
             print "humans win!"
-            self.stop_game()
             return True
         elif gb.get_dragon_count() > 0 and gb.get_human_count() <= 0:
             print "dragons win!"
-            self.stop_game()
             return True
 
         return False

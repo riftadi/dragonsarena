@@ -1,4 +1,7 @@
 import pygame
+import json
+from GameState import GameState
+from threading import Thread
 
 # Introducing some (bad) global variables for pygame screen..
 # Define some colors
@@ -18,12 +21,13 @@ MARGIN = 2
 WINDOW_SIZE = [552, 552]
 
 
-class GUIDisplay(object):
+class GUIDisplay(Thread):
     """
         Viewer class
     """
-    def __init__(self, gamestate, display_delay):
-        self.gamestate = gamestate
+    def __init__(self, display_delay):
+        Thread.__init__(self)
+        self.gamestate = GameState()
         self.display_delay = display_delay
         self.quit_flag = False
 
@@ -37,8 +41,14 @@ class GUIDisplay(object):
         self.im_human = pygame.image.load("human.bmp")
         self.im_dragon = pygame.image.load("dragon.bmp")
 
-    def mainloop(self):
-        while not self.gamestate.is_game_finished() and not self.quit_flag:
+    def set_gamestate(self, state):
+        self.gamestate = state
+
+    def stop(self):
+        self.quit_flag = True
+
+    def run(self):
+        while not self.quit_flag:
             for event in pygame.event.get():  # User did something
                 if event.type == pygame.QUIT:  # If user clicked close
                     self.quit_flag = True

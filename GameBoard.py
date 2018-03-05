@@ -1,9 +1,12 @@
+import json
+import json_encoder
+
 class GameBoard(object):
     """
         The board of the game, default size is 25x25
     """
 
-    def __init__(self, width=25, height=25):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         self.human_count = 0
