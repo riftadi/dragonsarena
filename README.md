@@ -7,7 +7,7 @@ Dragons Arena employs Trailing State Synchronization [^1] algorithm to synchroni
 
 The basic design of this game is depicted in the following image.
 
-![Classes design of Dragons Arena](https://github.com/riftadi/dragonsarena/blob/master/da_design.png)
+![Classes design of Dragons Arena](https://github.com/riftadi/dragonsarena/raw/master/da_design.png)
 
 [^1] Eric Cronin, Burton Filstrup, Anthony R. Kurc, and Sugih Jamin, An efficient synchronization mechanism for mirrored game architectures, NETGAMES, 2002.
 
