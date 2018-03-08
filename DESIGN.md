@@ -1,5 +1,7 @@
 # Dragons Arena Design Document
 
+![Image of Architecture](architecture.png)
+
 # Client
 ## Dragon/Human
 - chose randomly one server as there main connection to the game
@@ -16,7 +18,7 @@
 
 # Server
 - after server startup it tries to commit to one chosen beginning timestamp from which the internal clock starts 
-- has one publisher (for possible commands see README.md)
+- has one publisher (for possible commands see [README.md](README.md))
 - has one server for receiving commands of connected clients (connection is stateless)
 - when receiving a normal command (except spawn). Tag it with internal clock and publishes it. 
 - has message buffer which is emptied after the TSS if in the past
