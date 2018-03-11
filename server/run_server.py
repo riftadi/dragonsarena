@@ -1,11 +1,15 @@
+import sys
 from server.Server import Server
 
-SERVER_ID = 1
-VERBOSE = False
+server_id = 1
+verbose = False
 
-print "Starting Dragons Arena server %d.." % SERVER_ID
+if len(sys.argv) == 2:
+    server_id = int(sys.argv[1])
 
-S = Server(server_id=SERVER_ID, verbose=VERBOSE)
+print "Starting Dragons Arena server %d.." % server_id
+
+S = Server(server_id=server_id, verbose=verbose)
 
 # go into main loop
 S.mainloop()

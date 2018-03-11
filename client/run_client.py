@@ -13,15 +13,16 @@ if __name__ == '__main__':
     player_id = uuid.uuid4().hex
 
     if len(sys.argv) == 2:
-        player_type = sys.argv[1]
+        server_id = sys.argv[1]
 
     if len(sys.argv) == 3:
-        player_type = sys.argv[1]
+        server_id = sys.argv[1]
+        player_type = sys.argv[2]
 
     print "Starting client for %s with id %s.." % (player_type, player_id)
 
     # start our client
-    c = Client(player_type=player_type, player_id=player_id, verbose=VERBOSE)
+    c = Client(server_id=server_id, player_type=player_type, player_id=player_id, verbose=VERBOSE)
 
     # let the gamestate comes in
     c.wait_for_initial_gamestate()

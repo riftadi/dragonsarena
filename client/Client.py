@@ -1,15 +1,25 @@
 import time
+import zmq
 
 from client.bot.Bot import HumanBot, DragonBot
 from client.ClientSideCommandSender import ClientSideCommandSender
 from client.GameStateUpdater import GameStateUpdater
 
 class Client(object):
-    def __init__(self, player_type, player_id, verbose=True):
-        self.msg_sender = ClientSideCommandSender()
+    def __init__(self, server_id, player_type, player_id, verbose=True):
+        self.server_id = server_id
+        
+        target_url = ["127.0.0.1:8181", "127.0.0.1:8282"]
+        if self.server_id == 2:
+            target_url = ["127.0.0.1:9191", "127.0.0.1:9292"]
 
-        self.gsu = GameStateUpdater()
+        self.zmq_root_context = zmq.Context()
+
+
+        self.gsu = GameStateUpdater(self.zmq_root_context, target_url=target_url[0])
         self.gsu.start()
+
+        self.msg_sender = ClientSideCommandSender(self.zmq_root_context, target_url=target_url[1])
 
         # spawn our character
         self.player_id = player_id
@@ -54,3 +64,5 @@ class Client(object):
         self.msg_sender.terminate()
         self.bot.join()
         self.gsu.join()
+
+        self.zmq_root_context.term()
