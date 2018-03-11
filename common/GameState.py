@@ -1,4 +1,4 @@
-from GameBoard import GameBoard
+from common.GameBoard import GameBoard
 
 class GameState(object):
     """
@@ -23,6 +23,9 @@ class GameState(object):
 
     def add_character(self, obj):
         self.character_list.append(obj)
+
+    def remove_character(self, obj):
+        self.character_list.remove(obj)
 
     def get_actions(self):
         return self.action_list
@@ -53,6 +56,7 @@ class GameState(object):
 
     def get_object_by_id(self, obj_id):
         result = None
+
         for char in self.character_list:
             if char.get_obj_id() == obj_id:
                 result = char

@@ -7,7 +7,7 @@ Dragons Arena employs Trailing State Synchronization [^1] algorithm to synchroni
 
 The basic design of this game is depicted in the following image.
 
-![Classes design of Dragons Arena](https://github.com/riftadi/dragonsarena/raw/master/da_design.png)
+![Classes design of Dragons Arena](https://github.com/riftadi/dragonsarena/raw/master/img/da_design.png)
 
 [^1] Eric Cronin, Burton Filstrup, Anthony R. Kurc, and Sugih Jamin, An efficient synchronization mechanism for mirrored game architectures, NETGAMES, 2002.
 
@@ -79,11 +79,17 @@ Notifies interested subscriber that the current played game is over. Clients lis
 For starting the server component
 
 ```
-python Server.py
+python -m server.run_server
 ```
 
 For starting a bunch of dragon and human bots plus an additional bot with gui
 
 ```
 ./battle.sh
+```
+
+Emergency stop command to stop the game (hopefully not needed)
+
+```
+./unbattle.sh
 ```
