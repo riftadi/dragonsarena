@@ -61,6 +61,7 @@ class Character(object):
         if self.hp <= 0:
             if self.verbose: print "..%s (%d, %d) is slained!" % (self.name, self.x, self.y)
             self.gameboard.del_object(self.type, self.x, self.y)
+        return self.hp
 
 class Human(Character):
     def __init__(self, obj_id, name, gameboard, hp=-1, ap=-1, x=-1, y=-1, verbose=True):
