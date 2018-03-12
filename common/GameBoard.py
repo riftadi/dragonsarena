@@ -1,6 +1,3 @@
-import json
-import json_encoder
-
 class GameBoard(object):
     """
         The board of the game, default size is 25x25
