@@ -10,5 +10,5 @@ if len(sys.argv) == 2:
 
 print "Starting viewer from %s.." % publisher_url
 
-guidisplay = GUIDisplay()
+guidisplay = GUIDisplay(publisher_url)
 guidisplay.mainloop()

@@ -6,14 +6,14 @@ import time
 from common.JSONEncoder import GameStateParser
 
 class GameStateUpdater(threading.Thread):
-    def __init__(self, zmq_context, update_delay=200.0, target_url="127.0.0.1:8181"):
+    def __init__(self, zmq_context, update_delay=200.0, publisher_url="127.0.0.1:8181"):
         threading.Thread.__init__(self)
         self.gamestate = None
         self.update_delay = float(update_delay)
-    
+
         self.context = zmq_context
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect("tcp://%s" % target_url)
+        self.subscriber.connect("tcp://%s" % publisher_url)
         # subscribe to gamestate topic
         self.subscriber.setsockopt(zmq.SUBSCRIBE, "gamestate")
         # CONFLATE means save only latest message in queue

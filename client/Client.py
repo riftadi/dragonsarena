@@ -12,10 +12,10 @@ class Client(object):
 
         self.zmq_root_context = zmq.Context()
 
-        self.gsu = GameStateUpdater(self.zmq_root_context, target_url=self.publisher_url)
+        self.gsu = GameStateUpdater(self.zmq_root_context, publisher_url=self.publisher_url)
         self.gsu.start()
 
-        self.msg_sender = ClientSideCommandSender(self.zmq_root_context, target_url=self.command_url)
+        self.msg_sender = ClientSideCommandSender(self.zmq_root_context, command_url=self.command_url)
 
         # spawn our character
         self.player_id = player_id
