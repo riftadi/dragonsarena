@@ -73,7 +73,7 @@ The gameengine publishes the current gamestate in a json format every iteration.
     "id": "player uuid"
 }]
 ```
-## topic: game over
+## topic: gameover
 Notifies interested subscriber that the current played game is over. Clients listen to it to shutdown the game.
 
 ## topic: command
