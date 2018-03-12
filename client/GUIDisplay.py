@@ -25,10 +25,10 @@ class GUIDisplay(object):
     """
         Viewer class
     """
-    def __init__(self, display_delay=500):
+    def __init__(self, target_url="127.0.0.1:9191", display_delay=500):
         self.zmq_root_context = zmq.Context()
         self.display_delay = display_delay
-        self.gsu = GameStateUpdater(self.zmq_root_context, target_url="127.0.0.1:9191")
+        self.gsu = GameStateUpdater(self.zmq_root_context, target_url=target_url)
         self.quit_flag = False
 
         self.gsu.start()
