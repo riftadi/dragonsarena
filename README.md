@@ -73,86 +73,11 @@ The gameengine publishes the current gamestate in a json format every iteration.
     "id": "player uuid"
 }]
 ```
-## topic: gameover
-Notifies interested subscriber that the current played game is over. Clients listen to it to shutdown the game.
-
-*(Adi: do we still need this? all the published gamestate contains already game running status)*
-
-## topic: command
-When a server receives a command from the client it immediatly pubilshes it with the topic ```command```. It adds the ```timestamp``` property to the JSON message that the other server can sort it within there TSS engine.
-
-```json
-{
-    "timestamp": "local progress",
-    ...
-}
-```
-
-## topic: alive
-send a heartbeat once in the gameloop to tell the other servers that oneself is alive. Other server can declare one as dead and therefore are not waiting a response for the commit process for spawning and starting time of the game.
-{
-    "id": "server adress,
-    "time: "current gametime"
-    
-}
-
-## topic: spawn
-Use a two phase commit for making sure that a player can spawn safely. The server who has a client which wants to spawn get's coordinates for new player and locks is locally (means that a move coordinate to this coordinate is refused). It afterwards proposes these coordinates to all other players and waits a vote message of them in order to commit it afterwards. As soon as there is one abort it tries a new coordinate.
-
-It may be that we can don't need the last commit message as all servers a listen to the vote anyway (or we use one to one messages for that). The heartbeat (alive topic) can be used to know for how many vote messages to wait.
-
-```
-{
-    "phase": "proposal",
-    "id": "id of new player",
-    "type: "human or dragon",
-    "x": "proposed x coordinate",
-    "y": "proposed y coordinate"
-}
-```
-
-```
-{
-    "phase": "vote",
-    "id": "vote in favour of coordinates for new player with id"
-}
-```
-
-```
-{
-    "phase": "abort",
-    "id": "vote against coordinates for new player with id"
-}
-```
-
-```
-{
-    "phase": "commit",
-    "id": "commit new coordinates for player with id"
-}
-```
-
-# Server --> Server and Server --> Client communication
-The communication between Server and Server plus Server and Client uses the publish/subscribe pattern. The Server published messages with different topics and the subscriber can decide to which topic to listen
-
-## topic: gamestate
-The gameengine publishes the current gamestate in a json format every iteration. For that the current list of alive players is published. The client listens to this event and creates a new game state out of this information and updates the bot plus the graphical user interface (gui).
-
-```
-"is_running" : True,
-"gamestate" : [{
-				    "x": "x coordinate of player",
-				    "y": "y coordinate of player",
-				    "hp": "current amount of health points",
-				    "type": "h(uman) or d(ragon)",
-				    "id": "player uuid"
-				}]
-```
 
 ## topic: gameover
 Notifies interested subscriber that the current played game is over. Servers also listen to it to shutdown the game.
 
-*(Adi: do we still need this? the servers should agree on the ending condition provided they all get the same commands)*
+*(Adi: do we still need this? all the published gamestate messages contains already game running status)*
 
 ## topic: command
 When a server receives a command from the client it immediatly pubilshes it with the topic ```command```. It adds the ```timestamp``` property to the JSON message that the other server can sort it within there TSS engine.
@@ -208,8 +133,9 @@ It may be that we can don't need the last commit message as all servers a listen
 }
 ```
 
-
 # Usage
+
+![Screenshot of Dragons Arena](img/da_screenshot.png)
 
 Right now, we have dual server components.
 All of the commands below should be run from the root directory of `dragonsarena`.
