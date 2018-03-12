@@ -7,7 +7,7 @@ Dragons Arena employs Trailing State Synchronization [^1] algorithm to synchroni
 
 The basic design of this game is depicted in the following image.
 
-![Classes design of Dragons Arena](https://github.com/riftadi/dragonsarena/raw/master/img/da_design.png)
+![Classes design of Dragons Arena](https://github.com/riftadi/dragonsarena/raw/master/da_design.png)
 
 [^1] Eric Cronin, Burton Filstrup, Anthony R. Kurc, and Sugih Jamin, An efficient synchronization mechanism for mirrored game architectures, NETGAMES, 2002.
 
@@ -68,12 +68,73 @@ The gameengine publishes the current gamestate in a json format every iteration.
     "x": "x coordinate of player",
     "y": "y coordinate of player",
     "hp": "current amount of health points",
+    "max_hp": "",
     "type": "h(uman) or d(ragon)",
     "id": "player uuid"
 }]
 ```
-## topic: game over
+## topic: gameover
 Notifies interested subscriber that the current played game is over. Clients listen to it to shutdown the game.
+
+## topic: command
+When a server receives a command from the client it immediatly pubilshes it with the topic ```command```. It adds the ```timestamp``` property to the JSON message that the other server can sort it within there TSS engine.
+
+```json
+{
+    "timestamp": "local progress",
+    ...
+}
+```
+
+## topic: alive
+send a heartbeat once in the gameloop to tell the other servers that oneself is alive. Other server can declare one as dead and therefore are not waiting a response for the commit process for spawning and starting time of the game.
+{
+    "id": "server adress,
+    "time: "current gametime"
+    
+}
+
+## topic: spawn
+Use a two phase commit for making sure that a player can spawn safely. The server who has a client which wants to spawn get's coordinates for new player and locks is locally (means that a move coordinate to this coordinate is refused). It afterwards proposes these coordinates to all other players and waits a vote message of them in order to commit it afterwards. As soon as there is one abort it tries a new coordinate.
+
+It may be that we can don't need the last commit message as all servers a listen to the vote anyway (or we use one to one messages for that). The heartbeat (alive topic) can be used to know for how many vote messages to wait.
+
+```
+{
+    "phase": "proposal",
+    "id": "id of new player",
+    "type: "human or dragon",
+    "x": "proposed x coordinate",
+    "y": "proposed y coordinate"
+}
+```
+
+```
+{
+    "phase": "vote",
+    "id": "vote in favour of coordinates for new player with id"
+}
+```
+
+```
+{
+    "phase": "abort",
+    "id": "vote against coordinates for new player with id"
+}
+```
+
+```
+{
+    "phase": "commit",
+    "id": "commit new coordinates for player with id"
+}
+```
+
+## topic start
+Server have to agree on a timestamp on which the counter of the gametime is based on. It does not matter if there is a certain small delta between the servers.
+- leader (defined before start) sends out his timestamp and the others adapt to it
+- everyone waits till it receives a heartbeat from all other servers and then sends out his timestamps (the youngers one get's selected)
+- some voting
 # Usage
 
 For starting the server component
