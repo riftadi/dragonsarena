@@ -5,7 +5,7 @@ This game is developed as an labwork assignment in [TU Delft's](https://www.tude
 
 Dragons Arena employs Trailing State Synchronization [^1] algorithm to synchronize action messages between peer-to-peer servers.
 
-The basic design of this game is depicted in the following image.
+The basic design of this game is depicted in the following image. A more comprehensive design is available in the [design document](DESIGN.md).
 
 ![Classes design of Dragons Arena](img/da_design.png)
 
