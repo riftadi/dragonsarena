@@ -1,4 +1,5 @@
 import pygame
+import zmq
 
 from client.GameStateUpdater import GameStateUpdater
 
@@ -24,9 +25,10 @@ class GUIDisplay(object):
     """
         Viewer class
     """
-    def __init__(self, display_delay=500):
+    def __init__(self, publisher_url, display_delay=500):
+        self.zmq_root_context = zmq.Context()
         self.display_delay = display_delay
-        self.gsu = GameStateUpdater()
+        self.gsu = GameStateUpdater(self.zmq_root_context, publisher_url=publisher_url)
         self.quit_flag = False
 
         self.gsu.start()
@@ -53,6 +55,7 @@ class GUIDisplay(object):
             pygame.time.wait(self.display_delay)
 
         self.gsu.join()
+        self.zmq_root_context.term()
         pygame.quit()
 
     def draw_screen(self, boardstring):

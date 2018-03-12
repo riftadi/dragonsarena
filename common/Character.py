@@ -5,27 +5,15 @@ class Character(object):
         self.obj_id = obj_id
         self.name = name
         self.max_hp = hp
+        self.x = x
+        self.y = y
         self.hp = hp
         self.ap = ap
         self.gameboard = gameboard
         self.type = char_type
         self.verbose = verbose
-
-        if x == -1 or y == -1:
-            safely_placed = False
-
-            while not safely_placed:
-                prop_x = randint(0, self.gameboard.get_width()-1)
-                prop_y = randint(0, self.gameboard.get_height()-1)
-
-                if self.gameboard.get_object(prop_x, prop_y) == None:
-                    safely_placed = True
-                    self.x = prop_x
-                    self.y = prop_y
-                    self.gameboard.set_object(self, prop_x, prop_y)
-        else:
-            self.x = x
-            self.y = y
+        
+        self.gameboard.set_object(self, self.x, self.y)
 
     def get_obj_id(self):
         return self.obj_id

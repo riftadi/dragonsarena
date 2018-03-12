@@ -11,17 +11,14 @@ class ClientSideCommandSender(object):
         This class is responsible to publish game states
         to ZMQ publisher which will be read by clients.
     """
-    def __init__(self, port_number=8282):
-        self.port_number = port_number
-
+    def __init__(self, zmq_context, command_url):
         # create ZMQ publisher socket for our clients (or observers)
-        self.context = zmq.Context()
+        self.context = zmq_context
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.connect("tcp://127.0.0.1:%s" % self.port_number)
+        self.socket.connect("tcp://%s" % command_url)
 
     def terminate(self):
         self.socket.close()
-        self.context.term()
 
     def send_message(self, message):
         if isinstance(message, dict):

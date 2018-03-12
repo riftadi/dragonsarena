@@ -7,9 +7,10 @@ from common.Character import *
 
 ### --TODO-- THIS CLASS IS NOT WORKER CLASS, SO NO THREAD BELONG HERE
 class TSSModel(object):
-    def __init__(self, width, height, verbose=True):
+    def __init__(self, width, height, start_time, verbose=True):
         self.width = width
         self.height = height
+        self.start_time = start_time
         self.verbose = verbose
 
         self.leadingstate = GameState(width, height)
@@ -60,6 +61,9 @@ class TSSModel(object):
     def get_current_time(self):
         return self.game_timer
 
+    def get_epoch_time(self):
+        return self.start_time
+
     def advance_game_time_by(self, ms):
         self.game_timer += ms
 
@@ -102,33 +106,45 @@ class TSSModel(object):
         self.leadingstate.add_action(action)
 
         # based on message type, do action
-        msg_id = action["msg_id"]
+        # msg_id = action["msg_id"]
         timestamp = action["timestamp"]
         action_type = action["type"]
-        #server_id = action["#server_id"]
-        obj_id = action["player_id"]
+        server_id = action["server_id"]
 
         # now do the action
-        if action_type == "spawn":
+        if action_type == "gamestart":
+            # get start timer indicator from peer
+            self.start_time = action["start_time"]
+            # update our local game_timer
+            self.game_timer = int(round(time.time() * 1000)) - self.start_time
+
+        elif action_type == "spawn":
             # create a new character
+            obj_id = action["player_id"]
             obj_name = action["player_id"]
             obj_type = action["player_type"]
+
+            x = action["x"]
+            y = action["y"]
+            hp = action["hp"]
+            ap = action["ap"]
 
             new_obj = None
             if obj_type == 'human':
                 self.humans_joined += 1
                 new_obj = Human(obj_id, obj_name, self.leadingstate.get_gameboard(),
-                    verbose=self.verbose)
+                    hp, ap, x, y, verbose=self.verbose)
             elif obj_type == 'dragon':
                 self.dragons_joined += 1
                 new_obj = Dragon(obj_id, obj_name, self.leadingstate.get_gameboard(),
-                    verbose=self.verbose)
+                    hp, ap, x, y, verbose=self.verbose)
 
             self.leadingstate.add_character(new_obj)
 
-            # precondition for game end condition check
-            if not self.players_and_dragons_have_spawned_flag and self.humans_joined > 0 and self.dragons_joined > 0:
-                self.players_and_dragons_have_spawned_flag = True
+            # precondition for game end condition check, a player must be in the game once
+            if not self.players_and_dragons_have_spawned_flag:
+                if self.humans_joined > 0 and self.dragons_joined > 0:
+                    self.players_and_dragons_have_spawned_flag = True
 
         elif action_type == "move":
             # move a character
