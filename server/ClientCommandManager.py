@@ -25,7 +25,7 @@ class ClientCommandManager(Thread):
 
         # create ZMQ reply socket for receiving clients' commands
         self.socket = self.zmq_context.socket(zmq.REP)
-        self.socket.bind("tcp://127.0.0.1:%s" % self.port_number)
+        self.socket.bind("tcp://0.0.0.0:%s" % self.port_number)
         # wrap the socket with timeout capabilities
         self.socket_non_blocking = SocketWrapper(self.socket)
 

@@ -28,11 +28,11 @@ class ServerCommandDuplicator(Thread):
         if self.server_id == 1:
             # create ZMQ publisher socket to broadcast our messages
             self.socket_pub = self.zmq_context.socket(zmq.PUB)
-            self.socket_pub.bind("tcp://127.0.0.1:%d" % 8383)
+            self.socket_pub.bind("tcp://0.0.0.0:%d" % 8383)
 
             # create ZMQ subscriber sockets to subscribe to server02 message
             self.socket_sub02 = self.zmq_context.socket(zmq.SUB)
-            self.socket_sub02.connect("tcp://127.0.0.1:%d" % 9393) # local host just for development purpose
+            self.socket_sub02.connect("tcp://0.0.0.0:%d" % 9393) # local host just for development purpose
             # self.socket.bind("tcp://%s:%s" % (self.peers[0]["address"], self.port_number))
             self.socket_sub02.setsockopt(zmq.SUBSCRIBE, "command")
             self.socket_sub02.setsockopt(zmq.SUBSCRIBE, "alive")
@@ -41,11 +41,11 @@ class ServerCommandDuplicator(Thread):
         elif self.server_id == 2:
             # create ZMQ publisher socket to broadcast our messages
             self.socket_pub = self.zmq_context.socket(zmq.PUB)
-            self.socket_pub.bind("tcp://127.0.0.1:%d" % 9393)
+            self.socket_pub.bind("tcp://0.0.0.0:%d" % 9393)
 
             # create ZMQ subscriber sockets to subscribe to server02 message
             self.socket_sub01 = self.zmq_context.socket(zmq.SUB)
-            self.socket_sub01.connect("tcp://127.0.0.1:%d" % 8383) # local host just for development purpose
+            self.socket_sub01.connect("tcp://0.0.0.0:%d" % 8383) # local host just for development purpose
             # self.socket.bind("tcp://%s:%s" % (self.peers[0]["address"], self.port_number))
             self.socket_sub01.setsockopt(zmq.SUBSCRIBE, "command")
             self.socket_sub01.setsockopt(zmq.SUBSCRIBE, "alive")

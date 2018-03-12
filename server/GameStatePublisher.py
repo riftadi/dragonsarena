@@ -23,7 +23,7 @@ class GameStatePublisher(Thread):
 
         # create ZMQ publisher socket for our clients (or observers)
         self.socket = self.zmq_context.socket(zmq.PUB)
-        self.socket.bind("tcp://127.0.0.1:%s" % self.port_number)
+        self.socket.bind("tcp://0.0.0.0:%s" % self.port_number)
 
     def run(self):
         while not self.finished_flag:
