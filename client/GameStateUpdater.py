@@ -14,7 +14,8 @@ class GameStateUpdater(threading.Thread):
         self.context = zmq_context
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.connect("tcp://%s" % target_url)
-        self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
+        # subscribe to gamestate topic
+        self.subscriber.setsockopt(zmq.SUBSCRIBE, "gamestate")
         # CONFLATE means save only latest message in queue
         self.subscriber.setsockopt(zmq.CONFLATE, 1)
 
@@ -22,13 +23,16 @@ class GameStateUpdater(threading.Thread):
 
     def run(self):
         while self.is_game_running():
-            msg = self.subscriber.recv()
+            # update gamestate periodically
+            [topic, msg] = self.subscriber.recv_multipart()
 
-            parser = GameStateParser()
-            game_running_flag, self.gamestate = parser.parse(msg)
+            if topic == "gamestate":
+                parser = GameStateParser()
+                game_running_flag, self.gamestate = parser.parse(msg)
 
-            if game_running_flag == False:
-                self.stop_game()
+                if game_running_flag == False:
+                    self.stop_game()
+            # other topic goes here, if any
 
             time.sleep(self.update_delay/1000.0)
 

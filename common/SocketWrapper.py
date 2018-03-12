@@ -23,3 +23,12 @@ class SocketWrapper(object):
             return self.socket.recv()
         
         raise TimeoutError()
+    
+    def recv_multipart(self, timeout=5000):
+        poller = zmq.Poller()
+        poller.register(self.socket, zmq.POLLIN)
+        msg = dict(poller.poll(timeout))
+        if len(msg) > 0:
+            return self.socket.recv_multipart()
+        
+        raise TimeoutError()

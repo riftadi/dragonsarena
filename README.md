@@ -64,22 +64,33 @@ The communication between Server and Server plus Server and Client uses the publ
 The gameengine publishes the current gamestate in a json format every iteration. For that the current list of alive players is published. The client listens to this event and creates a new game state out of this information and updates the bot plus the graphical user interface (gui).
 
 ```json
-[{
-    "x": "x coordinate of player",
-    "y": "y coordinate of player",
-    "hp": "current amount of health points",
-    "type": "h(uman) or d(ragon)",
-    "id": "player uuid"
-}]
+"is_running" : True,
+"gamestate" : [{
+				    "x": "x coordinate of player",
+				    "y": "y coordinate of player",
+				    "hp": "current amount of health points",
+				    "type": "h(uman) or d(ragon)",
+				    "id": "player uuid"
+				}]
 ```
-## topic: game over
+
+## topic: gameover
 Notifies interested subscriber that the current played game is over. Clients listen to it to shutdown the game.
+
 # Usage
 
-For starting the server component
+Right now, we have dual server components.
+
+For starting the first server:
 
 ```
-python -m server.run_server
+python -m server.run_server 1
+```
+
+Preferably in other session, start the second server:
+
+```
+python -m server.run_server 2
 ```
 
 For starting a bunch of dragon and human bots plus an additional bot with gui
@@ -88,7 +99,7 @@ For starting a bunch of dragon and human bots plus an additional bot with gui
 ./battle.sh
 ```
 
-Emergency stop command to stop the game (hopefully not needed)
+Emergency stop command to stop the game (hopefully not needed), tested in Mac OS, might need some mods in other OS
 
 ```
 ./unbattle.sh

@@ -12,9 +12,11 @@ class ServerCommandDuplicator(Thread):
         This class is responsible to duplicating commands to peer servers
         using zeroMQ publisher/subscriber message queue.
     """
-    def __init__(self, tss_model, zmq_context, client_command_box, server_id, port_number=8383):
+    def __init__(self, tss_model, zmq_context, client_command_box, server_id, port_number="8383"):
         Thread.__init__(self)
-        self.peers = [{"name" : "server02", "address" : "192.168.1.102"}]
+        # temporary hack for developing within one machine
+        # --TODO-- : create one file to define where the servers are, regardless their location
+        # self.peers = [{"name" : "server02", "address" : "192.168.1.102"}]
 
         self.tss_model = tss_model
         self.zmq_context = zmq_context
@@ -32,9 +34,10 @@ class ServerCommandDuplicator(Thread):
             self.socket_sub02 = self.zmq_context.socket(zmq.SUB)
             self.socket_sub02.connect("tcp://127.0.0.1:%d" % 9393) # local host just for development purpose
             # self.socket.bind("tcp://%s:%s" % (self.peers[0]["address"], self.port_number))
-            self.socket_sub02.setsockopt(zmq.SUBSCRIBE, "")
-            # wrap the socket with timeout capabilities
-            self.socket_sub02_with_timeout = SocketWrapper(self.socket_sub02)
+            self.socket_sub02.setsockopt(zmq.SUBSCRIBE, "command")
+            self.socket_sub02.setsockopt(zmq.SUBSCRIBE, "alive")
+            self.socket_sub02.setsockopt(zmq.SUBSCRIBE, "spawn")
+            self.socket_sub02_non_blocking = SocketWrapper(self.socket_sub02)
         elif self.server_id == 2:
             # create ZMQ publisher socket to broadcast our messages
             self.socket_pub = self.zmq_context.socket(zmq.PUB)
@@ -44,9 +47,10 @@ class ServerCommandDuplicator(Thread):
             self.socket_sub01 = self.zmq_context.socket(zmq.SUB)
             self.socket_sub01.connect("tcp://127.0.0.1:%d" % 8383) # local host just for development purpose
             # self.socket.bind("tcp://%s:%s" % (self.peers[0]["address"], self.port_number))
-            self.socket_sub01.setsockopt(zmq.SUBSCRIBE, "")
-            # wrap the socket with timeout capabilities
-            self.socket_sub01_with_timeout = SocketWrapper(self.socket_sub01)
+            self.socket_sub01.setsockopt(zmq.SUBSCRIBE, "command")
+            self.socket_sub01.setsockopt(zmq.SUBSCRIBE, "alive")
+            self.socket_sub01.setsockopt(zmq.SUBSCRIBE, "spawn")
+            self.socket_sub01_non_blocking = SocketWrapper(self.socket_sub01)
 
     def run(self):
         while self.tss_model.is_game_running():
@@ -54,21 +58,26 @@ class ServerCommandDuplicator(Thread):
             # WARNING: the default recv() function is BLOCKING, use with caution!
             try:
                 if self.server_id == 1:
-                    json_message = self.socket_sub02_with_timeout.recv(timeout=20000)
+                    [topic, json_message] = self.socket_sub02_non_blocking.recv_multipart(timeout=3000)
                 elif self.server_id == 2:
-                    json_message = self.socket_sub01_with_timeout.recv(timeout=20000)
+                    [topic, json_message] = self.socket_sub01_non_blocking.recv_multipart(timeout=3000)
 
-                parsed_message = json.loads(json_message)
-                # debugging print command
-                # print "receiving: %s" % parsed_message
+                if topic == "command":
+                    parsed_message = json.loads(json_message)
+                    # debugging print command
+                    # print "receiving: %s" % parsed_message
 
-                # save the command in our storage box
-                self.message_box.put_message(parsed_message)
+                    # save the command in our storage box
+                    self.message_box.put_message(parsed_message)
 
-                # execute the command in the leading state
-                self.tss_model.process_action(parsed_message)
+                    # execute the command in the leading state
+                    self.tss_model.process_action(parsed_message)
+
+                # other topic goes here
             except:
                 pass
+
+        # end of the game running loop
 
         self.socket_pub.close()
 
@@ -95,4 +104,4 @@ class ServerCommandDuplicator(Thread):
         msg["server_id"] = self.server_id
         msg["timestamp"] = self.tss_model.get_current_time()
 
-        self.socket_pub.send(json.dumps(msg, cls=GameStateEncoder))
+        self.socket_pub.send_multipart(["command", json.dumps(msg, cls=GameStateEncoder)])
