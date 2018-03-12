@@ -80,6 +80,8 @@ Notifies interested subscriber that the current played game is over. Clients lis
 # Usage
 
 Right now, we have dual server components.
+All of the commands below should be run from the root directory of `dragonsarena`.
+
 
 For starting the first server:
 
