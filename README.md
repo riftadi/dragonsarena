@@ -148,3 +148,22 @@ For starting a bunch of dragon and human bots plus an additional bot with gui
 ```
 ./battle.sh
 ```
+
+Other than that, to start an observer manually we can use this command:
+```
+python -m client.Observer <publisher_url>
+ex:
+python -m client.Observer 127.0.0.1:8181
+```
+
+To start a human player manually:
+```
+python -m client.run_client <publisher_url> <command_url>
+ex:
+python -m client.run_client 127.0.0.1:8181 127.0.0.1:8282
+```
+
+To start a dragon player manually:
+```
+python -m client.run_client <publisher_url> <command_url> dragon
+```
