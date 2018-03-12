@@ -1,6 +1,6 @@
 # Dragons Arena Design Document
 
-![Image of Architecture](architecture.png)
+![Image of Architecture](img/architecture.png)
 
 # Game Flow
 ## Client
