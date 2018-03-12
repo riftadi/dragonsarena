@@ -7,7 +7,7 @@ Dragons Arena employs Trailing State Synchronization [^1] algorithm to synchroni
 
 The basic design of this game is depicted in the following image.
 
-![Classes design of Dragons Arena](https://github.com/riftadi/dragonsarena/raw/master/da_design.png)
+![Classes design of Dragons Arena](img/da_design.png)
 
 [^1] Eric Cronin, Burton Filstrup, Anthony R. Kurc, and Sugih Jamin, An efficient synchronization mechanism for mirrored game architectures, NETGAMES, 2002.
 
@@ -64,7 +64,6 @@ The communication between Server and Server plus Server and Client uses the publ
 The gameengine publishes the current gamestate in a json format every iteration. For that the current list of alive players is published. The client listens to this event and creates a new game state out of this information and updates the bot plus the graphical user interface (gui).
 
 ```json
-<<<<<<< HEAD
 [{
     "x": "x coordinate of player",
     "y": "y coordinate of player",
@@ -76,6 +75,8 @@ The gameengine publishes the current gamestate in a json format every iteration.
 ```
 ## topic: gameover
 Notifies interested subscriber that the current played game is over. Clients listen to it to shutdown the game.
+
+*(Adi: do we still need this? all the published gamestate contains already game running status)*
 
 ## topic: command
 When a server receives a command from the client it immediatly pubilshes it with the topic ```command```. It adds the ```timestamp``` property to the JSON message that the other server can sort it within there TSS engine.
@@ -131,12 +132,13 @@ It may be that we can don't need the last commit message as all servers a listen
 }
 ```
 
-## topic start
-Server have to agree on a timestamp on which the counter of the gametime is based on. It does not matter if there is a certain small delta between the servers.
-- leader (defined before start) sends out his timestamp and the others adapt to it
-- everyone waits till it receives a heartbeat from all other servers and then sends out his timestamps (the youngers one get's selected)
-- some voting
-=======
+# Server --> Server and Server --> Client communication
+The communication between Server and Server plus Server and Client uses the publish/subscribe pattern. The Server published messages with different topics and the subscriber can decide to which topic to listen
+
+## topic: gamestate
+The gameengine publishes the current gamestate in a json format every iteration. For that the current list of alive players is published. The client listens to this event and creates a new game state out of this information and updates the bot plus the graphical user interface (gui).
+
+```
 "is_running" : True,
 "gamestate" : [{
 				    "x": "x coordinate of player",
@@ -148,9 +150,65 @@ Server have to agree on a timestamp on which the counter of the gametime is base
 ```
 
 ## topic: gameover
-Notifies interested subscriber that the current played game is over. Clients listen to it to shutdown the game.
+Notifies interested subscriber that the current played game is over. Servers also listen to it to shutdown the game.
 
->>>>>>> 5157421dc7a278499be3418974a9a813e3005984
+*(Adi: do we still need this? the servers should agree on the ending condition provided they all get the same commands)*
+
+## topic: command
+When a server receives a command from the client it immediatly pubilshes it with the topic ```command```. It adds the ```timestamp``` property to the JSON message that the other server can sort it within there TSS engine.
+
+```json
+{
+    "timestamp": "local progress",
+    ...
+}
+```
+
+## topic: alive
+send a heartbeat once in the gameloop to tell the other servers that oneself is alive. Other server can declare one as dead and therefore are not waiting a response for the commit process for spawning and starting time of the game.
+{
+    "id": "server adress,
+    "time: "current gametime"
+    
+}
+
+## topic: spawn
+Use a two phase commit for making sure that a player can spawn safely. The server who has a client which wants to spawn get's coordinates for new player and locks is locally (means that a move coordinate to this coordinate is refused). It afterwards proposes these coordinates to all other players and waits a vote message of them in order to commit it afterwards. As soon as there is one abort it tries a new coordinate.
+
+It may be that we can don't need the last commit message as all servers a listen to the vote anyway (or we use one to one messages for that). The heartbeat (alive topic) can be used to know for how many vote messages to wait.
+
+```
+{
+    "phase": "proposal",
+    "id": "id of new player",
+    "type: "human or dragon",
+    "x": "proposed x coordinate",
+    "y": "proposed y coordinate"
+}
+```
+
+```
+{
+    "phase": "vote",
+    "id": "vote in favour of coordinates for new player with id"
+}
+```
+
+```
+{
+    "phase": "abort",
+    "id": "vote against coordinates for new player with id"
+}
+```
+
+```
+{
+    "phase": "commit",
+    "id": "commit new coordinates for player with id"
+}
+```
+
+
 # Usage
 
 Right now, we have dual server components.
@@ -163,7 +221,7 @@ For starting the first server:
 python -m server.run_server 1
 ```
 
-Preferably in other session, start the second server:
+Preferably in another session, start the second server:
 
 ```
 python -m server.run_server 2
@@ -179,4 +237,26 @@ Emergency stop command to stop the game (hopefully not needed), tested in Mac OS
 
 ```
 ./unbattle.sh
+```
+
+Other than that, to start an observer manually we can use this command:
+
+```
+python -m client.Observer <publisher_url>
+example:
+python -m client.Observer 127.0.0.1:8181
+```
+
+To start a human player manually:
+
+```
+python -m client.run_client <publisher_url> <command_url>
+example:
+python -m client.run_client 127.0.0.1:8181 127.0.0.1:8282
+```
+
+To start a dragon player manually:
+
+```
+python -m client.run_client <publisher_url> <command_url> dragon
 ```
