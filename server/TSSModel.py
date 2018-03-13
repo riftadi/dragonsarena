@@ -13,10 +13,10 @@ class TSSModel(object):
         self.start_time = start_time
         self.verbose = verbose
 
-        self.leadingstate = GameState(width, height)
+        self.leadingstate = GameState(self.width, self.height, self.verbose)
         # --TODO-- add more trailing state
-        # self.trailingstate01board = GameState(width, height)
-        # self.trailingstate02board = GameState(width, height)
+        # self.trailingstate01board = GameState(self.width, self.height, self.verbose)
+        # self.trailingstate02board = GameState(self.width, self.height, self.verbose)
 
         # THE ABSOLUTE SOURCE OF TRUTH OF GAME RUNNING STATE
         # It should be True if running, False if not running
@@ -25,38 +25,9 @@ class TSSModel(object):
         # game timer in milliseconds
         self.game_timer = 0
         self.last_msg_box_access_time = 0
-
-        self.dragons_joined = 0
-        self.humans_joined = 0
-
         self.trailing_timer1 = -100
 
-        self.human_count = 0
-        self.dragon_count = 0
-
         self.players_and_dragons_have_spawned_flag = False
-
-    # def run(self):
-    #     while self.is_game_running():
-    #         # read message buffer
-    #         mb = self.get_message_box()
-    #         action_list = mb.get_messages(self.last_msg_box_access_time, self.game_timer)
-
-    #         self.process_action_list(action_list)
-
-    #         self.last_msg_box_access_time = self.game_timer
-    #         pygame.time.wait(self.clockrate)
-    #         self.game_timer += self.clockrate
-
-    #         # publish current gamestate
-    #         # json_str = json.dumps(self.leadingstate, cls=GameStateEncoder)
-    #         # self.msg_box.send_message(json_str, "gamestate")
-
-    #         # clear message_box every 300 ms
-    #         if self.game_timer % 300 == 0:
-    #             mb.delete_messages_before(self.game_timer)
-
-    #     self.msg_box.send_message("Over", "game over")
 
     def get_current_time(self):
         return self.game_timer
@@ -80,22 +51,19 @@ class TSSModel(object):
         state = True
 
         if self.players_and_dragons_have_spawned_flag:
-            gb = self.leadingstate.get_gameboard()
+            gs = self.leadingstate
 
-            if gb.get_dragon_count() <= 0 and gb.get_human_count() > 0:
+            if gs.get_dragon_count() <= 0 and gs.get_human_count() > 0:
                 print "Humans win!"
                 state = False
-            elif gb.get_dragon_count() > 0 and gb.get_human_count() <= 0:
+            elif gs.get_dragon_count() > 0 and gs.get_human_count() <= 0:
                 print "Dragons win!"
                 state = False
 
         self.game_running_flag = state
 
     def get_list_of(self, c):
-        return self.leadingstate.get_gameboard().get_list_of(c)
-
-    def get_gameboard(self):
-        return self.leadingstate.get_gameboard()
+        return self.leadingstate.get_list_of(c)
 
     def get_gamestate(self):
         return self.leadingstate
@@ -126,16 +94,15 @@ class TSSModel(object):
 
             x = action["x"]
             y = action["y"]
+
             hp = action["hp"]
             ap = action["ap"]
 
             new_obj = None
             if obj_type == 'human':
-                self.humans_joined += 1
                 new_obj = Human(obj_id, obj_name, self.leadingstate.get_gameboard(),
                     hp, ap, x, y, verbose=self.verbose)
             elif obj_type == 'dragon':
-                self.dragons_joined += 1
                 new_obj = Dragon(obj_id, obj_name, self.leadingstate.get_gameboard(),
                     hp, ap, x, y, verbose=self.verbose)
 
@@ -143,7 +110,7 @@ class TSSModel(object):
 
             # precondition for game end condition check, a player must be in the game once
             if not self.players_and_dragons_have_spawned_flag:
-                if self.humans_joined > 0 and self.dragons_joined > 0:
+                if self.leadingstate.get_human_count() > 0 and self.leadingstate.get_dragon_count() > 0:
                     self.players_and_dragons_have_spawned_flag = True
 
         elif action_type == "move":
@@ -155,8 +122,7 @@ class TSSModel(object):
             x = action["x"]
             y = action["y"]
 
-            obj = self.leadingstate.get_object_by_id(obj_id)
-            obj.move_to(x,y)
+            obj = self.leadingstate.move(obj_id, x, y)
 
         elif action_type == "attack":
             # attack a character
@@ -165,12 +131,14 @@ class TSSModel(object):
             obj_id = action["player_id"]
             target_id = action["target_id"]
 
-            obj = self.leadingstate.get_object_by_id(obj_id)
-            target_obj = self.leadingstate.get_object_by_id(target_id)
-            target_obj_hp = target_obj.get_attacked(obj.get_ap(), obj.get_name())
+            self.leadingstate.attack(obj_id, target_id)
+
+            # obj = self.leadingstate.get_object_by_id(obj_id)
+            # target_obj = self.leadingstate.get_object_by_id(target_id)
+            # target_obj_hp = target_obj.get_attacked(obj.get_ap(), obj.get_name())
             
-            if target_obj_hp <= 0:
-                self.leadingstate.remove_character(target_obj)
+            # if target_obj_hp <= 0:
+            #     self.leadingstate.remove_character(target_obj)
 
         elif action_type == "heal":
             # heal a character
@@ -179,9 +147,11 @@ class TSSModel(object):
             obj_id = action["obj_id"]
             target_id = action["target_id"]
 
-            obj = self.leadingstate.get_object_by_id(obj_id)
-            target_obj = self.leadingstate.get_object_by_id(target_id)
-            target_obj.get_healed(obj.get_ap(), obj.get_name())
+            self.leadingstate.heal(obj_id, target_id)
+
+            # obj = self.leadingstate.get_object_by_id(obj_id)
+            # target_obj = self.leadingstate.get_object_by_id(target_id)
+            # target_obj.get_healed(obj.get_ap(), obj.get_name())
 
     def process_action_list(self, action_list):
         for action in action_list:
@@ -190,7 +160,7 @@ class TSSModel(object):
     def get_message_box(self):
         return self.msg_box
 
-    def get_object(self, x=None, y=None):
+    def get_object(self, x, y):
         return self.leadingstate.get_object(x,y)
 
     def get_width(self):
@@ -199,20 +169,6 @@ class TSSModel(object):
     def get_height(self):
         return self.height
 
-    def move_object(self, old_x, old_y, new_x, new_y):
-        gb = self.leadingstate.get_gameboard()
-        gb[new_x][new_y] = gb[old_x][old_y]
-        gb[old_x][old_y] = None
-
     def get_object_by_id(self, obj_id):
-        result = None
-        gb = self.leadingstate.get_gameboard()
-
-        for x in xrange(gb.get_width()):
-            for y in xrange(gb.get_height()):
-                obj = gb.get_object(x,y)
-                if obj != None and obj.get_obj_id() == obj_id:
-                    result = gb.get_object(x,y)
-                    break
-
-        return result
+        gs = self.leadingstate
+        return gs.get_object_by_id(obj_id)

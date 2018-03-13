@@ -35,42 +35,42 @@ class ClientCommandManager(Thread):
             # here we use a wrapped non-blocking version
             try:
                 json_message = self.socket_non_blocking.recv(timeout=10000)
-
-                #  Send ack to client
-                self.socket.send(b"{'status' : 'ok'}")
-
-                parsed_message = json.loads(json_message)
-                parsed_message["timestamp"] = self.tss_model.get_current_time()
-                parsed_message["server_id"] = self.server_id
-
-                # if a character spawns, randomize spawning location, hp, and ap
-                if parsed_message["type"] == "spawn":
-                    if parsed_message["player_type"] == "human":
-                        parsed_message["hp"] = randint(11,20)
-                        parsed_message["ap"] = randint(1,10)
-                    elif parsed_message["player_type"] == "dragon":
-                        parsed_message["hp"] = randint(50,100)
-                        parsed_message["ap"] = randint(5,20)
-
-                    safely_placed = False
-                    while not safely_placed:
-                        prop_x = randint(0, 24)
-                        prop_y = randint(0, 24)
-
-                        if self.tss_model.get_object(prop_x, prop_y) == None:
-                            safely_placed = True
-                            parsed_message["x"] = prop_x
-                            parsed_message["y"] = prop_y
-
-                # execute the command in the leading state
-                self.tss_model.process_action(parsed_message)
-
-                # duplicate command to peers
-                self.server_state_duplicator.publish_msg_to_peers(parsed_message)
-
-                # save the command for state duplication purposes
-                self.message_box.put_message(parsed_message)
             except:
-                pass
+                continue
+
+            #  Send ack to client
+            self.socket.send(b"{'status' : 'ok'}")
+
+            parsed_message = json.loads(json_message)
+            parsed_message["timestamp"] = self.tss_model.get_current_time()
+            parsed_message["server_id"] = self.server_id
+
+            # if a character spawns, randomize spawning location, hp, and ap
+            if parsed_message["type"] == "spawn":
+                if parsed_message["player_type"] == "human":
+                    parsed_message["hp"] = randint(11,20)
+                    parsed_message["ap"] = randint(1,10)
+                elif parsed_message["player_type"] == "dragon":
+                    parsed_message["hp"] = randint(50,100)
+                    parsed_message["ap"] = randint(5,20)
+
+                safely_placed = False
+                while not safely_placed:
+                    prop_x = randint(0, 24)
+                    prop_y = randint(0, 24)
+
+                    if self.tss_model.get_object(prop_x, prop_y) == None:
+                        safely_placed = True
+                        parsed_message["x"] = prop_x
+                        parsed_message["y"] = prop_y
+
+            # execute the command in the leading state
+            self.tss_model.process_action(parsed_message)
+
+            # duplicate command to peers
+            self.server_state_duplicator.publish_msg_to_peers(parsed_message)
+
+            # save the command for state duplication purposes
+            self.message_box.put_message(parsed_message)
 
         self.socket.close()
