@@ -2,29 +2,38 @@
 import sys
 import time
 import uuid
+from random import randint
 
 from client.Client import Client
 
 VERBOSE = False
+server_file = "server.txt"
+servers = []
 
 if __name__ == '__main__':
     # by default the type is human, unless specified otherwise
     player_type = "human"
     player_id = uuid.uuid4().hex
 
-    if len(sys.argv) == 3:
-        publisher_url = sys.argv[1]
-        command_url = sys.argv[2]
+    if len(sys.argv) == 2:
+        player_type = sys.argv[1]
 
-    if len(sys.argv) == 4:
-        publisher_url = sys.argv[1]
-        command_url = sys.argv[2]
-        player_type = sys.argv[3]
+    with open(server_file) as f:
+        next(f)
+        for line in f:
+            server_adresses = line.strip().split(",")
+            servers.append({
+                "client2server": server_adresses[0],
+                "server2client": server_adresses[1],
+                "server2server": server_adresses[2]
+            })
+
+    server = servers[randint(0, len(servers) - 1)]
 
     print "Starting client for %s with id %s.." % (player_type, player_id)
 
     # start our client
-    c = Client(publisher_url=publisher_url, command_url=command_url, player_type=player_type, player_id=player_id, verbose=VERBOSE)
+    c = Client(publisher_url=server["server2client"], command_url=server["client2server"], player_type=player_type, player_id=player_id, verbose=VERBOSE)
 
     # let the gamestate comes in
     c.wait_for_initial_gamestate()

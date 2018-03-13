@@ -9,42 +9,15 @@ from server.GameStatePublisher import GameStatePublisher
 from server.ServerCommandDuplicator import ServerCommandDuplicator
 
 class Server(object):
-    def __init__(self, server_id, verbose=True):
+    def __init__(self, server_id, host, peers, verbose=True):
         self.server_id = server_id
         self.verbose = verbose
         # get start time in milliseconds since epoch
         self.absolute_game_start_time = int(round(time.time() * 1000))
         self.zmq_root_context = zmq.Context()
 
-        self.peers = {
-                        1 : {"client2server" : {"host" : "0.0.0.0", "port" : "8282"},
-                            "server2client" : {"host" : "0.0.0.0", "port" : "8181"},
-                            "server2server" : {"host" : "0.0.0.0", "port" : "8383"},},
-
-                        2 : {"client2server" : {"host" : "0.0.0.0", "port" : "9292"},
-                            "server2client" : {"host" : "0.0.0.0", "port" : "9191"},
-                            "server2server" : {"host" : "0.0.0.0", "port" : "9393"},},
-
-                        3 : {"client2server" : {"host" : "0.0.0.0", "port" : "8282"},
-                            "server2client" : {"host" : "0.0.0.0", "port" : "8181"},
-                            "server2server" : {"host" : "0.0.0.0", "port" : "8383"},},
-
-                        4 : {"client2server" : {"host" : "0.0.0.0", "port" : "8282"},
-                            "server2client" : {"host" : "0.0.0.0", "port" : "8181"},
-                            "server2server" : {"host" : "0.0.0.0", "port" : "8383"},},
-
-                        5 : {"client2server" : {"host" : "0.0.0.0", "port" : "8282"},
-                            "server2client" : {"host" : "0.0.0.0", "port" : "8181"},
-                            "server2server" : {"host" : "0.0.0.0", "port" : "8383"},}
-                    }
-
-        # temporary hack to develop within one machine
-        self.peer_id = 0
-
-        if self.server_id == 1:
-            self.peer_id = 2
-        elif self.server_id == 2:
-            self.peer_id = 1
+        self.peers = peers
+        self.host = host
 
         # MODELLER CLASSES INSTANTIATION
         # start TSS boards representation
@@ -61,18 +34,18 @@ class Server(object):
         self.clock_winning_worker.start()
 
         # start client facing game state publisher
-        self.publisher_worker = GameStatePublisher(self.T, self.zmq_root_context, port_number=self.peers[self.peer_id]["server2client"]["port"])
+        self.publisher_worker = GameStatePublisher(self.T, self.zmq_root_context, publisher=self.host["server2client"])
         self.publisher_worker.start()
 
         # start server to server communication engine
         self.server_cmd_duplicator_worker = ServerCommandDuplicator(self.T, self.zmq_root_context, self.clients_cmds_box,
-                    self.server_id, port_number=self.peers[self.peer_id]["server2server"]["port"])
+                    self.server_id, host=host, peers=peers)
         self.server_cmd_duplicator_worker.start()
         self.server_cmd_duplicator_worker.create_game_start_message(self.absolute_game_start_time)
 
         # start client commands worker
         self.client_command_worker = ClientCommandManager(self.T, self.zmq_root_context, self.server_id, self.clients_cmds_box,
-            self.server_cmd_duplicator_worker, port_number=self.peers[self.peer_id]["client2server"]["port"])
+            self.server_cmd_duplicator_worker, command_host=self.host["client2server"])
         self.client_command_worker.start()
 
     def mainloop(self):
