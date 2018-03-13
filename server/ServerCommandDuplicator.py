@@ -18,7 +18,8 @@ class ServerCommandDuplicator(Thread):
         self.zmq_context = zmq_context
         self.message_box = client_command_box
         self.server_id = server_id
-        self.subscriptions = []
+        self.subscriptions = {}
+        self.heartbeat = {}
 
         #create ZMQ publisher socket to broadcast our messages
         self.publisher = self.zmq_context.socket(zmq.PUB)
@@ -31,21 +32,25 @@ class ServerCommandDuplicator(Thread):
             connection.setsockopt(zmq.SUBSCRIBE, "command")
             connection.setsockopt(zmq.SUBSCRIBE, "alive")
             connection.setsockopt(zmq.SUBSCRIBE, "spawn")
-            self.subscriptions.append(connection)
+            self.subscriptions[server["server2server"]] = connection
 
     def run(self):
+        last_alive_in_ms = int(round(time.time() * 1000))
         while self.tss_model.is_game_running():
             # Listens for messages from peers
             # based on http://zguide.zeromq.org/py:msreader
-            for subscription in self.subscriptions:
+            for subscription in self.subscriptions.itervalues():
+                if subscription is None:
+                    continue
+
                 while True:
                     try:
-                        [topic, json_message] = subscription.recv_multipart(zmq.DONTWAIT)
+                        message = subscription.recv(zmq.DONTWAIT)
                     except zmq.Again:
                         break
 
-                    if topic == "command":
-                        parsed_message = json.loads(json_message)
+                    if message.startswith("command|") == True:
+                        parsed_message = json.loads(message[8:])
                         # debugging print command
                         # print "receiving: %s" % parsed_message
 
@@ -55,16 +60,37 @@ class ServerCommandDuplicator(Thread):
                         # execute the command in the leading state
                         self.tss_model.process_action(parsed_message)
 
+                    if message.startswith("alive|") == True:
+                        self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()
+
                     # other topic goes here
-            # No activity, so sleep for 1 msec
-            time.sleep(0.001) 
+            now = int(round(time.time() * 1000))
+            if now - last_alive_in_ms > 100:
+                self.publish_alive()
+                last_alive_in_ms = now
+            self.check_peers()
 
         # end of the game running loop
 
         self.publisher.close()
 
-        for subscription in self.subscriptions:
+        for subscription in self.subscriptions.itervalues():
+            if subscription is None:
+                continue
             subscription.close()
+
+    def check_peers(self):
+        now = time.time()
+
+        for key, timestamp in self.heartbeat.iteritems():
+            if timestamp is None:
+                continue
+            if now - timestamp > 1:
+                self.heartbeat[key] = None
+                print "shuting down " + key
+                self.subscriptions[key].close()
+                self.subscriptions[key] = None
+
 
     def create_game_start_message(self, start_time):
         msg = {
@@ -84,4 +110,11 @@ class ServerCommandDuplicator(Thread):
         msg["server_id"] = self.server_id
         msg["timestamp"] = self.tss_model.get_current_time()
 
-        self.publisher.send_multipart(["command", json.dumps(msg, cls=GameStateEncoder)])
+        s = "command|"+json.dumps(msg, cls=GameStateEncoder)
+        self.publisher.send(s)
+
+    def publish_alive(self):
+        msg = {
+            "timestamp": self.tss_model.get_current_time()
+        }
+        self.publisher.send("alive|")
