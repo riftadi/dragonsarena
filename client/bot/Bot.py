@@ -125,7 +125,7 @@ class HumanBot(Bot):
         nearest_target = None
         is_dragon_exist = False
 
-        dragon_list = self.gamestate.get_gameboard().get_list_of('d')
+        dragon_list = self.gamestate.get_list_of('d')
 
         for dragon in dragon_list:
             dragon_x = dragon.get_x()
@@ -143,7 +143,7 @@ class HumanBot(Bot):
         nearest_friend = None
         is_nearby_friend_need_healing = False
 
-        human_list = self.gamestate.get_gameboard().get_list_of('h')
+        human_list = self.gamestate.get_list_of('h')
 
         for human in human_list:
             hum_x = human.get_x()
@@ -229,7 +229,7 @@ class DragonBot(Bot):
         nearest_target = None
         is_human_exist = False
 
-        human_list = self.gamestate.get_gameboard().get_list_of('h')
+        human_list = self.gamestate.get_list_of('h')
 
         for human in human_list:
             hum_x = human.get_x()

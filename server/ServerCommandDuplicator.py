@@ -61,21 +61,21 @@ class ServerCommandDuplicator(Thread):
                     [topic, json_message] = self.socket_sub02_non_blocking.recv_multipart(timeout=3000)
                 elif self.server_id == 2:
                     [topic, json_message] = self.socket_sub01_non_blocking.recv_multipart(timeout=3000)
-
-                if topic == "command":
-                    parsed_message = json.loads(json_message)
-                    # debugging print command
-                    # print "receiving: %s" % parsed_message
-
-                    # save the command in our storage box
-                    self.message_box.put_message(parsed_message)
-
-                    # execute the command in the leading state
-                    self.tss_model.process_action(parsed_message)
-
-                # other topic goes here
             except:
-                pass
+                continue
+
+            if topic == "command":
+                parsed_message = json.loads(json_message)
+                # debugging print command
+                # print "receiving: %s" % parsed_message
+
+                # save the command in our storage box
+                self.message_box.put_message(parsed_message)
+
+                # execute the command in the leading state
+                self.tss_model.process_action(parsed_message)
+
+            # other topic goes here
 
         # end of the game running loop
 

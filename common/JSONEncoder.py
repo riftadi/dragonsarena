@@ -28,6 +28,7 @@ class GameStateParser():
         status_chlist = json.loads(json_str)
         game_running_flag = status_chlist["is_running"]
         character_list = status_chlist["gamestate"]
+
         if len(character_list) > 0:
             character_list = map(self.createCharacter, character_list)
 
@@ -37,11 +38,12 @@ class GameStateParser():
         state = GameState()
         state.set_characters_list(character_list)
         state.set_gameboard(self.gb)
+        
         return game_running_flag, state
 
     def createCharacter(self, char):
         if char["type"] == "h":
-            return Human(char["id"], char["id"],self.gb,char["hp"],0,char["x"], char['y'], False)
+            return Human(char["id"], char["id"],self.gb,char["hp"],0,char["x"], char["y"], False)
         else:
-            return Dragon(char["id"], char["id"],self.gb,char["hp"],0,char["x"], char['y'], False)
+            return Dragon(char["id"], char["id"],self.gb,char["hp"],0,char["x"], char["y"], False)
 
