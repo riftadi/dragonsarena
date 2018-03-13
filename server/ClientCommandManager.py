@@ -13,7 +13,7 @@ class ClientCommandManager(Thread):
         This class is responsible to publish game states
         to ZMQ publisher which will be read by clients.
     """
-    def __init__(self, tss_model, zmq_context, server_id, client_command_box, server_state_duplicator, port_number="8282"):
+    def __init__(self, tss_model, zmq_context, server_id, client_command_box, server_state_duplicator, command_host="0.0.0.0:8282"):
         Thread.__init__(self)
 
         self.message_box = client_command_box
@@ -21,11 +21,10 @@ class ClientCommandManager(Thread):
         self.zmq_context = zmq_context
         self.server_id = server_id
         self.server_state_duplicator = server_state_duplicator
-        self.port_number = port_number
 
         # create ZMQ reply socket for receiving clients' commands
         self.socket = self.zmq_context.socket(zmq.REP)
-        self.socket.bind("tcp://0.0.0.0:%s" % self.port_number)
+        self.socket.bind("tcp://%s" % command_host)
         # wrap the socket with timeout capabilities
         self.socket_non_blocking = SocketWrapper(self.socket)
 
