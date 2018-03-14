@@ -25,9 +25,10 @@ class GUIDisplay(object):
     """
         Viewer class
     """
-    def __init__(self, publisher_url, display_delay=500):
+    def __init__(self, publisher_url, display_delay=500, with_background=False):
         self.zmq_root_context = zmq.Context()
         self.display_delay = display_delay
+        self.with_background = with_background
         self.gsu = GameStateUpdater(self.zmq_root_context, publisher_url=publisher_url)
         self.quit_flag = False
 
@@ -60,18 +61,25 @@ class GUIDisplay(object):
         pygame.quit()
 
     def draw_screen(self, boardstring):
-        self.screen.blit(self.im_bg, (0,0))
+        if self.with_background:
+            self.screen.blit(self.im_bg, (0,0))
+        else:
+            # paint it black
+            self.screen.fill(BLACK)
 
         # Draw the grid
         for row in xrange(25):
             for column in xrange(25):
-        #         pygame.draw.rect(self.screen,
-        #                          WHITE,
-        #                          [(MARGIN + HEIGHT) * row + MARGIN,
-        #                           (MARGIN + WIDTH) * column + MARGIN,
-        #                           HEIGHT,
-        #                           WIDTH])
+                if not self.with_background:
+                    # make white boxes
+                    pygame.draw.rect(self.screen,
+                                     WHITE,
+                                     [(MARGIN + HEIGHT) * row + MARGIN,
+                                      (MARGIN + WIDTH) * column + MARGIN,
+                                      HEIGHT,
+                                      WIDTH])
 
+                # draw characters
                 if boardstring[row*25+column] == 'h':
                     self.screen.blit(self.im_human, ((MARGIN + HEIGHT) * row + MARGIN,
                                       (MARGIN + WIDTH) * column + MARGIN))
