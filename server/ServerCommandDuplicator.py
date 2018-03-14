@@ -64,6 +64,7 @@ class ServerCommandDuplicator(Thread):
                         self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()
 
                     # other topic goes here
+                    
             now = int(round(time.time() * 1000))
             if now - last_alive_in_ms > 100:
                 self.publish_alive()
@@ -90,7 +91,6 @@ class ServerCommandDuplicator(Thread):
                 print "shuting down " + key
                 self.subscriptions[key].close()
                 self.subscriptions[key] = None
-
 
     def create_game_start_message(self, start_time):
         msg = {

@@ -10,8 +10,8 @@ from common.SocketWrapper import SocketWrapper
 
 class ClientCommandManager(Thread):
     """
-        This class is responsible to publish game states
-        to ZMQ publisher which will be read by clients.
+        This class is responsible to wait for commands
+        submitted to the server's ZMQ REP by clients.
     """
     def __init__(self, tss_model, zmq_context, server_id, client_command_box, server_state_duplicator, command_host="0.0.0.0:8282"):
         Thread.__init__(self)
