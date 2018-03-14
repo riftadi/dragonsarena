@@ -39,10 +39,11 @@ class GUIDisplay(object):
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
 
         # Set title of screen
-        pygame.display.set_caption("Dragon's Arena")
+        pygame.display.set_caption("Dragons Arena")
 
         self.im_human = pygame.image.load("img/human.bmp")
         self.im_dragon = pygame.image.load("img/dragon.bmp")
+        self.im_bg = pygame.image.load("img/bg.bmp")
 
     def mainloop(self):
         while self.gsu.is_game_running() and not self.quit_flag:
@@ -59,17 +60,17 @@ class GUIDisplay(object):
         pygame.quit()
 
     def draw_screen(self, boardstring):
-        self.screen.fill(BLACK)
+        self.screen.blit(self.im_bg, (0,0))
 
         # Draw the grid
         for row in xrange(25):
             for column in xrange(25):
-                pygame.draw.rect(self.screen,
-                                 WHITE,
-                                 [(MARGIN + HEIGHT) * row + MARGIN,
-                                  (MARGIN + WIDTH) * column + MARGIN,
-                                  HEIGHT,
-                                  WIDTH])
+        #         pygame.draw.rect(self.screen,
+        #                          WHITE,
+        #                          [(MARGIN + HEIGHT) * row + MARGIN,
+        #                           (MARGIN + WIDTH) * column + MARGIN,
+        #                           HEIGHT,
+        #                           WIDTH])
 
                 if boardstring[row*25+column] == 'h':
                     self.screen.blit(self.im_human, ((MARGIN + HEIGHT) * row + MARGIN,
