@@ -1,3 +1,4 @@
+import copy
 from common.GameBoard import GameBoard
 
 class GameState(object):
@@ -14,10 +15,43 @@ class GameState(object):
         self.human_list = []
         self.dragon_list = []
 
-        self.action_list = []
+        self.executed_commands = []
 
-        # action_dict = {10001 : {'action_type' : 'spawn', 'msg_id' : 10001, ...},
-        #                10002 : {'action_type' : 'move', 'msg_id' : 10002, ...},}
+        # excuted_commands = [{'action_type' : 'spawn', 'msg_id' : 10001, ...},
+        #                     {'action_type' : 'move', 'msg_id' : 10002, ...},
+        #                    ]
+
+    def __deepcopy__(self):
+        newone = type(self)()
+
+        # copy the simple attributes
+        newone.width = self.width
+        newone.height = self.height
+        newone.verbose = self.verbose
+
+        # create new human and dragon list
+        newone.human_list = []
+        for human in self.human_list:
+            newone.human_list.append(copy.deepcopy(human))
+
+        newone.dragon_list = []
+        for dragon in self.dragon_list:
+            newone.dragon_list.append(copy.deepcopy(dragon))
+
+        # create new gameboard
+        newone.gb = GameBoard(self.width, self.height)
+
+        # put humans and dragons to new gameboard
+        for human in newone.human_list:
+            newone.gb.set_object(human, human.get_x(), human.get_y())
+
+        for dragon in newone.dragon_list:
+            newone.gb.set_object(dragon, dragon.get_x(), dragon.get_y())
+
+        # copy executed commands
+        newone.executed_commands = copy.deepcopy(self.executed_commands)
+
+        return newone
 
     def get_characters(self):
         return (self.human_list + self.dragon_list)
@@ -34,16 +68,16 @@ class GameState(object):
     def get_actions(self):
         return self.action_list
 
-    def get_action_id(self, msg_id):
+    def is_action_id_exist(self, msg_id):
         """
-            Retrieve action where the key is msg_id, give None if msg not found
+            Check if there is an action with a specific msg_id, give True is found
         """
-        result = None
-        for action in self.action_list:
-            if action["msg_id"] == msg_id:
-                result = action
-                break
-
+        result = True
+        
+        if not any(d.get("msg_id", None) == msg_id for d in self.executed_commands):
+            # it does not exist
+            result = False
+        
         return result
 
     def get_object(self, x, y):
@@ -90,9 +124,9 @@ class GameState(object):
 
     def add_action(self, action):
         """
-            Save action in a dictionary where the keys are msg_id
+            Save action in executed_commands where the keys are msg_id
         """
-        self.action_list.append(action)
+        self.executed_commands.append(action)
 
     def add_character(self, obj):
         # add to gameboard

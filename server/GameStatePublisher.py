@@ -28,9 +28,10 @@ class GameStatePublisher(Thread):
         while not self.finished_flag:
             # send periodic gamestate
             message = {'is_running' : self.tss_model.is_game_running(),
-                        'gamestate': self.tss_model.get_gamestate()}
+                        'gamestate': self.tss_model.get_leadingstate()}
 
-            self.socket.send_multipart(['gamestate', json.dumps(message, cls=GameStateEncoder)])
+            s = "gamestate|"+json.dumps(message, cls=GameStateEncoder)
+            self.socket.send(s)
 
             time.sleep(self.update_delay/1000.0)
 

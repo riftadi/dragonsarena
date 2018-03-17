@@ -1,7 +1,7 @@
 from random import randint
 
 class Character(object):
-    def __init__(self, obj_id, name, gameboard, hp, ap, x, y, char_type, verbose=True):
+    def __init__(self, obj_id, name, hp, ap, x, y, char_type, verbose=True):
         self.obj_id = obj_id
         self.name = name
         self.max_hp = hp
@@ -9,10 +9,9 @@ class Character(object):
         self.y = y
         self.hp = hp
         self.ap = ap
-        self.gameboard = gameboard
         self.type = char_type
         self.verbose = verbose
-        
+
     def get_obj_id(self):
         return self.obj_id
 
@@ -50,8 +49,8 @@ class Character(object):
         self.y = y
 
 class Human(Character):
-    def __init__(self, obj_id, name, gameboard, hp, ap, x, y, verbose=True):
-        Character.__init__(self, obj_id, name, gameboard, hp, ap, x, y, char_type='h', verbose=verbose)
+    def __init__(self, obj_id, name, hp, ap, x, y, verbose=True):
+        Character.__init__(self, obj_id, name, hp, ap, x, y, char_type='h', verbose=verbose)
 
         self.hp = hp
         self.max_hp = self.hp
@@ -63,8 +62,8 @@ class Human(Character):
         if self.verbose: print "..ap %d" % self.ap
 
 class Dragon(Character):
-    def __init__(self, obj_id, name, gameboard, hp, ap, x, y, verbose=True):
-        Character.__init__(self, obj_id, name, gameboard, hp, ap, x, y, char_type='d', verbose=verbose)
+    def __init__(self, obj_id, name, hp, ap, x, y, verbose=True):
+        Character.__init__(self, obj_id, name, hp, ap, x, y, char_type='d', verbose=verbose)
 
         self.hp = hp
         self.max_hp = self.hp

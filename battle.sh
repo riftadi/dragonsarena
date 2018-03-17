@@ -1,95 +1,44 @@
 #!/bin/bash
 
-python -m client.Observer 127.0.0.1:9191 &
+python -m client.Observer 127.0.0.1:8181 &
+
+for run in {1..20}
+do
+ python -m client.run_client dragon &
+done
 
 sleep 5
 
-# let's spawn 4 dragons and 20 humans to both server
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
+# let's spawn 20 humans to randomized server
 
-for run in {1..10}
+for run in {1..20}
 do
  python -m client.run_client &
 done
 
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
+# sleep 5
 
-for run in {1..10}
-do
- python -m client.run_client &
-done
+# # let's spawn 20 humans to randomized server
 
-# wait a bit
-sleep 10
+# for run in {1..20}
+# do
+#  python -m client.run_client &
+# done
 
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
+# sleep 5
 
-for run in {1..10}
-do
- python -m client.run_client &
-done
+# # let's spawn 20 humans to randomized server
 
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
+# for run in {1..20}
+# do
+#  python -m client.run_client &
+# done
 
-for run in {1..10}
-do
- python -m client.run_client &
-done
+# sleep 5
 
-sleep 10
+# # let's spawn 20 humans to randomized server
 
-# let's spawn 4 dragons and 20 humans to both server
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
-
-for run in {1..10}
-do
- python -m client.run_client &
-done
-
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
-
-for run in {1..10}
-do
- python -m client.run_client &
-done
-
-sleep 10
-
-# let's spawn 4 dragons and 20 humans to both server
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
-
-for run in {1..10}
-do
- python -m client.run_client &
-done
-
-for run in {1..2}
-do
- python -m client.run_client dragon &
-done
-
-for run in {1..10}
-do
- python -m client.run_client &
-done
+# for run in {1..20}
+# do
+#  python -m client.run_client &
+# done

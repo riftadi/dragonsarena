@@ -1,6 +1,7 @@
 import zmq
 import json
 import time
+import uuid
 from threading import Thread
 
 from server.TSSModel import TSSModel
@@ -49,10 +50,17 @@ class ServerCommandDuplicator(Thread):
                     except zmq.Again:
                         break
 
+                    # we receive a new message from a peer!
                     if message.startswith("command|") == True:
                         parsed_message = json.loads(message[8:])
                         # debugging print command
                         # print "receiving: %s" % parsed_message
+
+                        # update our lamport clock
+                        curr_clock = self.tss_model.get_event_clock()
+                        msg_clock = parsed_message["eventstamp"]
+                        new_clock = max(curr_clock, msg_clock) + 1
+                        self.tss_model.set_event_clock(new_clock)
 
                         # save the command in our storage box
                         self.message_box.put_message(parsed_message)
@@ -64,7 +72,7 @@ class ServerCommandDuplicator(Thread):
                         self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()
 
                     # other topic goes here
-                    
+            
             now = int(round(time.time() * 1000))
             if now - last_alive_in_ms > 100:
                 self.publish_alive()
@@ -72,13 +80,12 @@ class ServerCommandDuplicator(Thread):
             self.check_peers()
 
         # end of the game running loop
-
-        self.publisher.close()
-
         for subscription in self.subscriptions.itervalues():
             if subscription is None:
                 continue
             subscription.close()
+
+        self.publisher.close()
 
     def check_peers(self):
         now = time.time()
@@ -88,33 +95,26 @@ class ServerCommandDuplicator(Thread):
                 continue
             if now - timestamp > 1:
                 self.heartbeat[key] = None
-                print "shuting down " + key
+                # print "shuting down " + key
                 self.subscriptions[key].close()
                 self.subscriptions[key] = None
 
-    def create_game_start_message(self, start_time):
-        msg = {
-                "type" : "gamestart",
-                "start_time" : start_time,
-                "server_id" : self.server_id,
-                "timestamp" : self.tss_model.get_current_time()
-               }
-
-        # save it to our message_box
-        self.message_box.put_message(msg)
-        
-        # send it to our peers
-        self.publish_msg_to_peers(msg)
-
     def publish_msg_to_peers(self, msg):
-        msg["server_id"] = self.server_id
-        msg["timestamp"] = self.tss_model.get_current_time()
-
         s = "command|"+json.dumps(msg, cls=GameStateEncoder)
-        self.publisher.send(s)
+
+        try:
+            # if self.server_id == 3:
+            #     # simulate late message sending in server 3
+            #     time.sleep(0.1)
+            self.publisher.send(s)
+        except:
+            pass
 
     def publish_alive(self):
         msg = {
             "timestamp": self.tss_model.get_current_time()
         }
-        self.publisher.send("alive|")
+        try:
+            self.publisher.send("alive|")
+        except:
+            pass
