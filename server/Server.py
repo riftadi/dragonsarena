@@ -2,11 +2,12 @@ import time
 import zmq
 
 from server.TSSModel import TSSModel
-from server.ClientMessageBox import ClientMessageBox
+from server.MessageBox import MessageBox
 from server.GameClockManager import GameClockManager
 from server.ClientCommandManager import ClientCommandManager
 from server.GameStatePublisher import GameStatePublisher
 from server.ServerCommandDuplicator import ServerCommandDuplicator
+from server.TSSManager import TSSManager
 
 class Server(object):
     def __init__(self, server_id, host, peers, verbose=True):
@@ -23,14 +24,14 @@ class Server(object):
         # start TSS boards representation
         self.T = TSSModel(width=25, height=25, start_time=self.absolute_game_start_time, verbose=self.verbose)
 
-        # start client message storage box
-        self.clients_cmds_box = ClientMessageBox()
+        # start message storage box
+        self.msg_box = MessageBox()
 
         ############################################
 
         # CONTROLLER (WORKER) CLASSES INSTANTIATION
         # start clock and winning condition updater worker
-        self.clock_winning_worker = GameClockManager(self.T, self.clients_cmds_box, update_delay=10.0)
+        self.clock_winning_worker = GameClockManager(self.T, self.msg_box, update_delay=10.0)
         self.clock_winning_worker.start()
 
         # start client facing game state publisher
@@ -38,15 +39,18 @@ class Server(object):
         self.publisher_worker.start()
 
         # start server to server communication engine
-        self.server_cmd_duplicator_worker = ServerCommandDuplicator(self.T, self.zmq_root_context, self.clients_cmds_box,
+        self.server_cmd_duplicator_worker = ServerCommandDuplicator(self.T, self.zmq_root_context, self.msg_box,
                     self.server_id, host=host, peers=peers)
         self.server_cmd_duplicator_worker.start()
-        self.server_cmd_duplicator_worker.create_game_start_message(self.absolute_game_start_time)
 
         # start client commands worker
-        self.client_command_worker = ClientCommandManager(self.T, self.zmq_root_context, self.server_id, self.clients_cmds_box,
+        self.client_command_worker = ClientCommandManager(self.T, self.zmq_root_context, self.server_id, self.msg_box,
             self.server_cmd_duplicator_worker, command_host=self.host["client2server"])
         self.client_command_worker.start()
+
+        # start TSS worker
+        self.tss_worker = TSSManager(self.T, self.msg_box, self.absolute_game_start_time)
+        self.tss_worker.start()
 
     def mainloop(self):
         while self.T.is_game_running():
@@ -60,6 +64,7 @@ class Server(object):
         self.publisher_worker.stop_publishing()
 
         # game is finished, cleaning up worker threads
+        self.tss_worker.join()
         self.client_command_worker.join()
         self.publisher_worker.join()
         self.clock_winning_worker.join()

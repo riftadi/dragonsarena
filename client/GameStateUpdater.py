@@ -6,7 +6,7 @@ import time
 from common.JSONEncoder import GameStateParser
 
 class GameStateUpdater(threading.Thread):
-    def __init__(self, zmq_context, update_delay=200.0, publisher_url="127.0.0.1:8181"):
+    def __init__(self, zmq_context, update_delay=300.0, publisher_url="127.0.0.1:8181"):
         threading.Thread.__init__(self)
         self.gamestate = None
         self.update_delay = float(update_delay)
@@ -24,14 +24,19 @@ class GameStateUpdater(threading.Thread):
     def run(self):
         while self.is_game_running():
             # update gamestate periodically
-            [topic, msg] = self.subscriber.recv_multipart()
+            try:
+                message = self.subscriber.recv()
+            except:
+                continue
 
-            if topic == "gamestate":
+            if message.startswith("gamestate|") == True:
+                msg = message[10:]
                 parser = GameStateParser()
                 game_running_flag, self.gamestate = parser.parse(msg)
 
                 if game_running_flag == False:
                     self.stop_game()
+
             # other topic goes here, if any
 
             time.sleep(self.update_delay/1000.0)

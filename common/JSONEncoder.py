@@ -43,7 +43,7 @@ class GameStateParser():
 
     def createCharacter(self, char):
         if char["type"] == "h":
-            return Human(char["id"], char["id"],self.gb,char["hp"],0,char["x"], char["y"], False)
+            return Human(char["id"], char["id"],char["hp"],0,char["x"], char["y"], False)
         else:
-            return Dragon(char["id"], char["id"],self.gb,char["hp"],0,char["x"], char["y"], False)
+            return Dragon(char["id"], char["id"],char["hp"],0,char["x"], char["y"], False)
 

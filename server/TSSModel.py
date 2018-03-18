@@ -1,5 +1,7 @@
 from threading import Thread
+import copy
 import pygame
+import time
 import json
 
 from common.GameState import GameState
@@ -14,9 +16,7 @@ class TSSModel(object):
         self.verbose = verbose
 
         self.leadingstate = GameState(self.width, self.height, self.verbose)
-        # --TODO-- add more trailing state
-        # self.trailingstate01board = GameState(self.width, self.height, self.verbose)
-        # self.trailingstate02board = GameState(self.width, self.height, self.verbose)
+        self.trailingstate01 = GameState(self.width, self.height, self.verbose)
 
         # THE ABSOLUTE SOURCE OF TRUTH OF GAME RUNNING STATE
         # It should be True if running, False if not running
@@ -24,10 +24,23 @@ class TSSModel(object):
 
         # game timer in milliseconds
         self.game_timer = 0
-        self.last_msg_box_access_time = 0
-        self.trailing_timer1 = -100
+
+        # initialize our lamport clock
+        self.event_clock = 0
 
         self.players_and_dragons_have_spawned_flag = False
+
+    def copy_trailing_to_leading_state(self):
+        self.leadingstate = copy.deepcopy(self.trailingstate01)
+
+    def get_event_clock(self):
+        return self.event_clock
+
+    def increase_event_clock(self):
+        self.event_clock += 1
+
+    def set_event_clock(self, new_clock):
+        self.event_clock = new_clock
 
     def get_current_time(self):
         return self.game_timer
@@ -51,7 +64,7 @@ class TSSModel(object):
         state = True
 
         if self.players_and_dragons_have_spawned_flag:
-            gs = self.leadingstate
+            gs = self.get_leadingstate()
 
             if gs.get_dragon_count() <= 0 and gs.get_human_count() > 0:
                 print "Humans win!"
@@ -65,19 +78,27 @@ class TSSModel(object):
     def get_list_of(self, c):
         return self.leadingstate.get_list_of(c)
 
-    def get_gamestate(self):
+    def get_leadingstate(self):
         return self.leadingstate
 
-    def process_action(self, action):
-        # action is a dictionary
-        # save it for checking purpose in the trailing states
-        self.leadingstate.add_action(action)
+    def get_firsttrailingstate(self):
+        return self.trailingstate01
 
-        # based on message type, do action
-        # msg_id = action["msg_id"]
-        timestamp = action["timestamp"]
+    def process_action(self, action, state_id=0):
+        # check which state the action is going to be applied to
+        # state_id possible values: leading (0), trailing1 (1)
+        state = None
+
+        if state_id == 0:
+            state = self.leadingstate
+        elif state_id == 1:
+            state = self.trailingstate01
+
+        # save action for checking purpose in the trailing states
+        state.add_action(action)
+
+        # based on message type, do an action
         action_type = action["type"]
-        server_id = action["server_id"]
 
         # now do the action
         if action_type == "gamestart":
@@ -100,62 +121,45 @@ class TSSModel(object):
 
             new_obj = None
             if obj_type == 'human':
-                new_obj = Human(obj_id, obj_name, self.leadingstate.get_gameboard(),
+                new_obj = Human(obj_id, obj_name,
                     hp, ap, x, y, verbose=self.verbose)
             elif obj_type == 'dragon':
-                new_obj = Dragon(obj_id, obj_name, self.leadingstate.get_gameboard(),
+                new_obj = Dragon(obj_id, obj_name,
                     hp, ap, x, y, verbose=self.verbose)
 
-            self.leadingstate.add_character(new_obj)
+            state.add_character(new_obj)
 
             # precondition for game end condition check, a player must be in the game once
             if not self.players_and_dragons_have_spawned_flag:
-                if self.leadingstate.get_human_count() > 0 and self.leadingstate.get_dragon_count() > 0:
+                if state.get_human_count() > 0 and state.get_dragon_count() > 0:
                     self.players_and_dragons_have_spawned_flag = True
 
         elif action_type == "move":
             # move a character
-            #server_id = action["#server_id"]
-
             obj_id = action["player_id"]
 
             x = action["x"]
             y = action["y"]
 
-            obj = self.leadingstate.move(obj_id, x, y)
+            obj = state.move(obj_id, x, y)
 
         elif action_type == "attack":
             # attack a character
-            #server_id = action["#server_id"]
-
             obj_id = action["player_id"]
             target_id = action["target_id"]
 
-            self.leadingstate.attack(obj_id, target_id)
-
-            # obj = self.leadingstate.get_object_by_id(obj_id)
-            # target_obj = self.leadingstate.get_object_by_id(target_id)
-            # target_obj_hp = target_obj.get_attacked(obj.get_ap(), obj.get_name())
-            
-            # if target_obj_hp <= 0:
-            #     self.leadingstate.remove_character(target_obj)
+            state.attack(obj_id, target_id)
 
         elif action_type == "heal":
             # heal a character
-            #server_id = action["#server_id"]
-
             obj_id = action["obj_id"]
             target_id = action["target_id"]
 
-            self.leadingstate.heal(obj_id, target_id)
+            state.heal(obj_id, target_id)
 
-            # obj = self.leadingstate.get_object_by_id(obj_id)
-            # target_obj = self.leadingstate.get_object_by_id(target_id)
-            # target_obj.get_healed(obj.get_ap(), obj.get_name())
-
-    def process_action_list(self, action_list):
+    def process_action_list(self, action_list, state_id=0):
         for action in action_list:
-            self.process_action(self, action)
+            self.process_action(action, state_id)
 
     def get_message_box(self):
         return self.msg_box

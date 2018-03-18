@@ -26,8 +26,11 @@ class ClientSideCommandSender(object):
         if isinstance(message, str):
             json_message = message
 
-        self.socket.send(json_message)
-        self.process_reply()
+        try:
+            self.socket.send(json_message)
+            self.process_reply()
+        except:
+            pass
 
     def process_reply(self):
         response = self.socket.recv()

@@ -20,13 +20,14 @@ class GameClockManager(Thread):
             # advancing game clock
             self.tss_model.advance_game_time_by(self.update_delay)
 
+            current_time = self.tss_model.get_current_time()
+
             # every 300 ms check winning condition
-            if (self.tss_model.get_current_time() % 300 == 0):
+            if (current_time % 300 == 0):
                 self.tss_model.check_game_end_condition()
 
             # clear message_box every 500 ms
-            current_time = self.tss_model.get_current_time()
             if (current_time % 500 == 0):
-                self.message_box.delete_messages_before(current_time)
+                self.message_box.delete_checked_messages()
 
             time.sleep(self.update_delay/1000.0)
