@@ -65,8 +65,10 @@ class ServerCommandDuplicator(Thread):
                         # save the command for state duplication purposes
                         self.message_box.put_message(parsed_message)
 
-                        # execute the command in the leading state
-                        self.tss_model.process_action(parsed_message, state_id=0)
+                        # execute the command in the leading state if the delay is within 200ms
+                        now = int(round(time.time() * 1000))
+                        if abs(now - parsed_message["timestamp"]) < 200:
+                            self.tss_model.process_action(parsed_message, state_id=0)
 
                     if message.startswith("alive|") == True:
                         self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()

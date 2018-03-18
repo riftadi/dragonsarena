@@ -8,38 +8,178 @@ do
  python -m client.run_client dragon &
 done
 
-sleep 5
+sleep 3
 
-# let's spawn 20 humans to randomized server
+# let's spawn 10 humans to randomized server
 
-for run in {1..20}
+for run in {1..5}
 do
  python -m client.run_client &
 done
 
-sleep 5
+sleep 2
 
-# let's spawn 20 humans to randomized server
-
-for run in {1..20}
+for run in {1..5}
 do
  python -m client.run_client &
 done
 
-sleep 5
+sleep 3
 
-# let's spawn 20 humans to randomized server
+# let's spawn 10 humans to randomized server
 
-for run in {1..20}
+for run in {1..5}
 do
  python -m client.run_client &
 done
 
-sleep 5
+sleep 2
 
-# let's spawn 20 humans to randomized server
+for run in {1..5}
+do
+ python -m client.run_client &
+done
 
-for run in {1..20}
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 3
+
+# let's spawn 10 humans to randomized server
+
+for run in {1..5}
+do
+ python -m client.run_client &
+done
+
+sleep 2
+
+for run in {1..5}
 do
  python -m client.run_client &
 done

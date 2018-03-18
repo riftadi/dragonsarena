@@ -5,7 +5,7 @@ from threading import Thread
 from common.GameState import GameState
 
 MIN_DELAY = 1000
-MAX_DELAY = 2000
+MAX_DELAY = 3000
 
 class Bot(Thread):
     def __init__(self, obj_id, msg_sender, gamestate_updater, verbose):
@@ -26,6 +26,8 @@ class Bot(Thread):
             time.sleep(0.2)
 
     def run(self):
+        # randomize time so that bots are not synchronized
+        time.sleep(float(randint(100,800))/1000.0)
         #wait till character object is set
         while self.obj == None:
             self.obj = self.gamestate.get_object_by_id(self.obj_id)
@@ -83,8 +85,6 @@ class HumanBot(Bot):
         Bot.__init__(self, obj_id, msg_sender, gamestate_updater, verbose)
 
     def do_best_action(self):
-        if self.obj is None:
-            return
         if self.obj.is_alive():     
             if self.verbose: print "\n%s's (%d, %d) turn" % (self.obj.get_name(), self.obj.get_x(), self.obj.get_y())
             is_dragon_exist, dragon = self.find_nearest_dragon()
@@ -212,8 +212,6 @@ class DragonBot(Bot):
         Bot.__init__(self, obj_id, msg_sender, gamestate_updater, verbose)
 
     def do_best_action(self):
-        if self.obj is None:
-            return
         if self.obj.is_alive():
             if self.verbose: print "\n%s's (%d, %d) turn" % (self.obj.get_name(), self.obj.get_x(), self.obj.get_y())
             is_prey_exist, prey = self.find_nearest_human()
