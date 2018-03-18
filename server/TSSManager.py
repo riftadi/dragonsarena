@@ -16,7 +16,7 @@ class TSSManager(Thread):
         self.message_box = message_box
         self.absolute_game_start_time = absolute_game_start_time
 
-        self.trailing1_delay = 200
+        self.trailing1_delay = 600
         self.start_checking_flag = False
 
         now = int(round(time.time() * 1000))
@@ -34,7 +34,7 @@ class TSSManager(Thread):
             else:
                 self.execute_state(state_id=1, curr_time=now)
 
-            time.sleep(200.0/1000.0)
+            time.sleep(float(self.trailing1_delay)/1000.0)
 
     def execute_state(self, state_id, curr_time):
         action_list = []
@@ -48,7 +48,7 @@ class TSSManager(Thread):
 
             if not is_consistent:
                 # there is inconsistency detected
-                print "inconsistency detected!!"
+                print "inconsistency detected!! duplicating trailing state.."
 
                 # repair our leadingstate
                 # duplicate first trailing state to leading state

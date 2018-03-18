@@ -26,8 +26,8 @@ class GameClockManager(Thread):
             if (current_time % 300 == 0):
                 self.tss_model.check_game_end_condition()
 
-            # clear message_box every 500 ms
-            if (current_time % 500 == 0):
+            # clear message_box every 2000 ms
+            if (current_time % 2000 == 0):
                 self.message_box.delete_checked_messages()
 
             time.sleep(self.update_delay/1000.0)

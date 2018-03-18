@@ -28,9 +28,13 @@ if __name__ == '__main__':
                 "server2server": server_adresses[2]
             })
 
-    server = servers[randint(0, len(servers) - 1)]
+    # only connect to either server 1 or 2
+    # rand_server = randint(0, 1)
+    # server = servers[rand_server-1]
 
-    print "Starting client for %s with id %s.." % (player_type, player_id)
+    rand_server = randint(0, len(servers) - 1)
+    server = servers[rand_server]
+    print "Starting client for %s with id %s, connecting to server %d" % (player_type, player_id, rand_server+1)
 
     # start our client
     c = Client(publisher_url=server["server2client"], command_url=server["client2server"], player_type=player_type, player_id=player_id, verbose=VERBOSE)
