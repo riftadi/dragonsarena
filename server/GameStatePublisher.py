@@ -11,7 +11,7 @@ class GameStatePublisher(Thread):
         This class is responsible to publish game states
         to ZMQ publisher which will be read by clients.
     """
-    def __init__(self, tss_model, zmq_context, update_delay=500.0, publisher="0.0.0.0:8282"):
+    def __init__(self, tss_model, zmq_context, update_delay=300.0, publisher="0.0.0.0:8181"):
         Thread.__init__(self)
 
         self.message_box = []

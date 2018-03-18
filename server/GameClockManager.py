@@ -28,6 +28,6 @@ class GameClockManager(Thread):
 
             # clear message_box every 500 ms
             if (current_time % 500 == 0):
-                self.message_box.delete_messages_before(current_time)
+                self.message_box.delete_checked_messages()
 
             time.sleep(self.update_delay/1000.0)

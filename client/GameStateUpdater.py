@@ -6,7 +6,7 @@ import time
 from common.JSONEncoder import GameStateParser
 
 class GameStateUpdater(threading.Thread):
-    def __init__(self, zmq_context, update_delay=500.0, publisher_url="127.0.0.1:8181"):
+    def __init__(self, zmq_context, update_delay=300.0, publisher_url="127.0.0.1:8181"):
         threading.Thread.__init__(self)
         self.gamestate = None
         self.update_delay = float(update_delay)

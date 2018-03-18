@@ -16,12 +16,13 @@ class GameState(object):
         self.dragon_list = []
 
         self.executed_commands = []
+        self.msg_id_list = []
 
         # excuted_commands = [{'action_type' : 'spawn', 'msg_id' : 10001, ...},
         #                     {'action_type' : 'move', 'msg_id' : 10002, ...},
         #                    ]
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, memo):
         newone = type(self)()
 
         # copy the simple attributes
@@ -72,13 +73,7 @@ class GameState(object):
         """
             Check if there is an action with a specific msg_id, give True is found
         """
-        result = True
-        
-        if not any(d.get("msg_id", None) == msg_id for d in self.executed_commands):
-            # it does not exist
-            result = False
-        
-        return result
+        return msg_id in self.msg_id_list
 
     def get_object(self, x, y):
         return self.gb.get_object(x, y)
@@ -127,6 +122,8 @@ class GameState(object):
             Save action in executed_commands where the keys are msg_id
         """
         self.executed_commands.append(action)
+        # save the message id in separate list for easy checking
+        self.msg_id_list.append(action["msg_id"])
 
     def add_character(self, obj):
         # add to gameboard

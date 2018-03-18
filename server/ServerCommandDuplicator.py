@@ -62,11 +62,11 @@ class ServerCommandDuplicator(Thread):
                         new_clock = max(curr_clock, msg_clock) + 1
                         self.tss_model.set_event_clock(new_clock)
 
-                        # save the command in our storage box
+                        # save the command for state duplication purposes
                         self.message_box.put_message(parsed_message)
 
                         # execute the command in the leading state
-                        self.tss_model.process_action(parsed_message)
+                        self.tss_model.process_action(parsed_message, state_id=0)
 
                     if message.startswith("alive|") == True:
                         self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()
@@ -103,8 +103,8 @@ class ServerCommandDuplicator(Thread):
         s = "command|"+json.dumps(msg, cls=GameStateEncoder)
 
         try:
-            # if self.server_id == 3:
-            #     # simulate late message sending in server 3
+            # if self.server_id == 2:
+            #     # simulate late message sending in server 2
             #     time.sleep(0.1)
             self.publisher.send(s)
         except:

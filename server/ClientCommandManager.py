@@ -50,7 +50,7 @@ class ClientCommandManager(Thread):
             # add lamport clock to our message
             parsed_message["eventstamp"] = self.tss_model.get_event_clock()
             # add local clock to our message
-            parsed_message["timestamp"] = self.tss_model.get_current_time()
+            parsed_message["timestamp"] = int(round(time.time() * 1000))
             # seed the msg_id with our server_id so that it is unique globally
             parsed_message["msg_id"] = uuid.uuid1(self.server_id).hex
 
@@ -63,7 +63,7 @@ class ClientCommandManager(Thread):
 
             # execute the command right away in the leading state (state_id 0)
             self.tss_model.process_action(parsed_message, state_id=0)
-
+            
             # duplicate command to peers
             self.server_command_duplicator.publish_msg_to_peers(parsed_message)
 
