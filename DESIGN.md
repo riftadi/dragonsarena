@@ -96,32 +96,31 @@ It may be that we can don't need the last commit message as all servers a listen
 
 ```
 {
-    "phase": "proposal",
-    "id": "id of new player",
-    "type: "human or dragon",
+    "type": "proposal",
+    "player_id": "id of new player",
+    "player_type: "human or dragon",
     "x": "proposed x coordinate",
-    "y": "proposed y coordinate"
+    "y": "proposed y coordinate",
+    "hp": "hp of new character",
+    "ap": "ap of new character"
 }
 ```
 
 ```
 {
-    "phase": "vote",
-    "id": "vote in favour of coordinates for new player with id"
+    "type": "vote",
+    "vote": "yes or no (bool)",
+    "player_id": "new player id"
 }
 ```
 
 ```
 {
-    "phase": "abort",
-    "id": "vote against coordinates for new player with id"
-}
-```
-
-```
-{
-    "phase": "commit",
-    "id": "commit new coordinates for player with id"
+    "type": "commit",
+    "success": "bool indicates commit or rollback",
+    "player_id": "new player id",
+    "timestamp": "new time for TSS in other server",
+    "eventstamp": "new event time for TSS in other server"
 }
 ```
 

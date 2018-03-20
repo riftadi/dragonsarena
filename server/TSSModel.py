@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread, Lock
 import copy
 import pygame
 import time
@@ -14,6 +14,7 @@ class TSSModel(object):
         self.height = height
         self.start_time = start_time
         self.verbose = verbose
+        self.lock = Lock()
 
         self.leadingstate = GameState(self.width, self.height, self.verbose)
         self.trailingstate01 = GameState(self.width, self.height, self.verbose)
@@ -28,6 +29,9 @@ class TSSModel(object):
         # initialize our lamport clock
         self.event_clock = 0
 
+        # locked cells if in the spawning phase
+        self.locked_cells = []
+
         self.players_and_dragons_have_spawned_flag = False
 
     def copy_trailing_to_leading_state(self):
@@ -38,6 +42,35 @@ class TSSModel(object):
 
     def increase_event_clock(self):
         self.event_clock += 1
+
+    def lock_cell(self, proposal_msg):
+        #self.lock.acquire()
+        self.locked_cells.append(proposal_msg)
+        #self.lock.release()
+
+    def unlock_cell(self, player_id):
+        #self.lock.acquire()
+        lst = self.locked_cells
+        player_idx = next((index for (index, d) in enumerate(lst) if d["player_id"] == player_id), None)
+        if player_idx is not None:
+            del lst[player_idx]
+        #self.lock.release()
+
+    def collide_with_locked(self,x, y):
+        #self.lock.acquire()
+        for lock in self.locked_cells:
+            if lock["x"] == x and lock["y"] == y:
+                return True
+        #self.lock.release()
+
+        return False
+    
+    def get_locked(self, player_id):
+        #self.lock.acquire()
+        lst = self.locked_cells
+        player_idx = next((index for (index, d) in enumerate(lst) if d["player_id"] == player_id), None)
+        #self.lock.release()
+        return lst[player_idx]
 
     def set_event_clock(self, new_clock):
         self.event_clock = new_clock
@@ -129,6 +162,12 @@ class TSSModel(object):
 
             state.add_character(new_obj)
 
+            # finally unlock the player field
+            try:
+                self.unlock_cell(obj_id)
+            except:
+                pass
+
             # precondition for game end condition check, a player must be in the game once
             if not self.players_and_dragons_have_spawned_flag:
                 if state.get_human_count() > 0 and state.get_dragon_count() > 0:
@@ -141,7 +180,8 @@ class TSSModel(object):
             x = action["x"]
             y = action["y"]
 
-            obj = state.move(obj_id, x, y)
+            if self.collide_with_locked(x,y) == False:
+                obj = state.move(obj_id, x, y)
 
         elif action_type == "attack":
             # attack a character
