@@ -16,7 +16,7 @@ class TSSManager(Thread):
         self.message_box = message_box
         self.absolute_game_start_time = absolute_game_start_time
 
-        self.trailing1_delay = 600
+        self.trailing1_delay = 500
         self.start_checking_flag = False
 
         now = int(round(time.time() * 1000))
@@ -51,12 +51,9 @@ class TSSManager(Thread):
                 print "inconsistency detected!! duplicating trailing state.."
 
                 # repair our leadingstate
-                # duplicate first trailing state to leading state
-                self.tss_model.copy_trailing_to_leading_state()
-                # get the complete action list until current time
-                action_list_until_curr_time = self.message_box.get_messages_within_timestamp(self.trailing1_execution_time, curr_time)
-                # execute all actions until current time to leading state
-                self.tss_model.process_action_list(action_list_until_curr_time, state_id=0)
+                # rollback to previous state and reexecutes commands
+                command_list = self.message_box.get_messages_within_timestamp(self.trailing1_execution_time, curr_time)
+                self.tss_model.rollback_state(command_list=command_list)
 
         if (len(action_list) > 0):
             # execute the action list in the state

@@ -18,6 +18,8 @@ class TSSModel(object):
 
         self.leadingstate = GameState(self.width, self.height, self.verbose)
         self.trailingstate01 = GameState(self.width, self.height, self.verbose)
+        # only used during rollback period
+        self.tempstate = None
 
         # THE ABSOLUTE SOURCE OF TRUTH OF GAME RUNNING STATE
         # It should be True if running, False if not running
@@ -34,8 +36,16 @@ class TSSModel(object):
 
         self.players_and_dragons_have_spawned_flag = False
 
-    def copy_trailing_to_leading_state(self):
-        self.leadingstate = copy.deepcopy(self.trailingstate01)
+    def rollback_state(self, command_list):
+        # print "before:"
+        # print self.leadingstate
+        # rollback to previous state and re-executes commands
+        self.tempstate = copy.deepcopy(self.trailingstate01)
+        # execute all actions until current time to leading state
+        self.process_action_list(command_list, state_id=9)
+        self.leadingstate = self.tempstate
+        # print "after:"
+        # print self.leadingstate
 
     def get_event_clock(self):
         return self.event_clock
@@ -99,10 +109,10 @@ class TSSModel(object):
         if self.players_and_dragons_have_spawned_flag:
             gs = self.get_leadingstate()
 
-            if gs.get_dragon_count() <= 0 and gs.get_human_count() > 0:
+            if gs.get_dragon_count() == 0 and gs.get_human_count() > 0:
                 print "Humans win!"
                 state = False
-            elif gs.get_dragon_count() > 0 and gs.get_human_count() <= 0:
+            elif gs.get_dragon_count() > 0 and gs.get_human_count() == 0:
                 print "Dragons win!"
                 state = False
 
@@ -126,6 +136,8 @@ class TSSModel(object):
             state = self.leadingstate
         elif state_id == 1:
             state = self.trailingstate01
+        elif state_id == 9:
+            state = self.tempstate
 
         # save action for checking purpose in the trailing states
         state.add_action(action)

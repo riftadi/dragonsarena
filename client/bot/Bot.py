@@ -15,6 +15,7 @@ class Bot(Thread):
         self.gamestate_updater = gamestate_updater
         self.verbose = verbose
         self.char_alive_flag = True
+        self.char_gone_counter = 0
 
         self.obj = None
 
@@ -39,7 +40,10 @@ class Bot(Thread):
 
             if self.obj == None:
                 # we exist no more in the gameboard
-                self.char_alive_flag = False
+                if self.char_gone_counter > 3:
+                    self.char_alive_flag = False
+                else:
+                    self.char_gone_counter += 1
             else:
                 self.do_best_action()
             
