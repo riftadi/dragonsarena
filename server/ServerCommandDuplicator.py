@@ -2,7 +2,7 @@ import zmq
 import json
 import time
 import uuid
-from threading import Thread
+from threading import Thread, Lock
 
 from server.TSSModel import TSSModel
 from common.JSONEncoder import GameStateEncoder
@@ -21,6 +21,8 @@ class ServerCommandDuplicator(Thread):
         self.server_id = server_id
         self.subscriptions = {}
         self.heartbeat = {}
+        self.votes = {}
+        self.lock = Lock()
 
         #create ZMQ publisher socket to broadcast our messages
         self.publisher = self.zmq_context.socket(zmq.PUB)
@@ -70,8 +72,56 @@ class ServerCommandDuplicator(Thread):
                         if abs(now - parsed_message["timestamp"]) < 200:
                             self.tss_model.process_action(parsed_message, state_id=0)
 
-                    if message.startswith("alive|") == True:
+                    elif message.startswith("alive|") == True:
                         self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()
+
+                    elif message.startswith("spawn|") == True:
+                        parsed_message = json.loads(message[6:])
+                        if parsed_message["type"] == "proposal":
+                            x = parsed_message["x"]
+                            y = parsed_message["y"]
+                            player_id = parsed_message["player_id"]
+                            # check if coordinates are occupied and not locked
+                            free = self.tss_model.get_object(x,y) is None and self.tss_model.collide_with_locked(x, y) is False
+                            vote = False
+                            if free is True:
+                                self.tss_model.lock_cell(parsed_message)
+                                vote = True
+
+                            self.publish_spawn({
+                                "type": "vote",
+                                "vote": vote,
+                                "player_id": player_id
+                            })
+                        elif parsed_message["type"] == "vote":
+                            vote = parsed_message["vote"]
+                            player_id = parsed_message["player_id"]
+
+                            if self.votes.has_key(player_id) == True:
+                                if vote == False:
+                                    self.tss_model.unlock_cell(player_id)
+                                    self.lock.acquire()
+                                    del self.votes[player_id]
+                                    self.lock.release()
+                                    self.publish_spawn({
+                                        "type": "commit",
+                                        "success": False,
+                                        "player_id": player_id
+                                    })
+                                else:
+                                    self.add_vote(player_id, subscription.LAST_ENDPOINT[6:])
+                        elif parsed_message["type"] == "commit":
+                            success = parsed_message["success"]
+                            player_id = parsed_message["player_id"]
+                            if success == False:
+                                self.tss_model.unlock_cell(player_id)
+                            else:
+                                proposal_msg = self.tss_model.get_locked(player_id)
+                                proposal_msg["timestamp"] = parsed_message["timestamp"]
+                                proposal_msg["eventstamp"] = parsed_message["eventstamp"]
+                                proposal_msg["type"] = "spawn"
+                                # execute the command right away in the leading state (in receiving server)
+                                self.tss_model.process_action(proposal_msg, state_id=0)
 
                     # other topic goes here
             
@@ -80,6 +130,7 @@ class ServerCommandDuplicator(Thread):
                 self.publish_alive()
                 last_alive_in_ms = now
             self.check_peers()
+            self.check_votes()
 
         # end of the game running loop
         for subscription in self.subscriptions.itervalues():
@@ -100,6 +151,67 @@ class ServerCommandDuplicator(Thread):
                 # print "shuting down " + key
                 self.subscriptions[key].close()
                 self.subscriptions[key] = None
+
+    def check_votes(self):
+        if len(self.votes) == 0:
+            return
+        self.lock.acquire()
+        done = []
+        for player_id, votes in self.votes.iteritems():
+            if len(votes) == 0:
+                continue
+
+            all_received = True
+
+            for server, connection in self.subscriptions.iteritems():
+                if connection is None:
+                    continue
+
+                host = connection.LAST_ENDPOINT[6:]
+                if host not in votes:
+                    all_received = False
+                    break
+
+            if all_received is True:
+                done.append(player_id)  
+
+        for player_id in done:
+            # message for local spawning via TSS
+            proposal_msg = self.tss_model.get_locked(player_id)
+            
+            # add lamport clock to our message
+            proposal_msg["eventstamp"] = self.tss_model.get_event_clock()
+            # add local clock to our message
+            proposal_msg["timestamp"] = int(round(time.time() * 1000))
+            proposal_msg["type"] = "spawn"
+            # execute in proposing server
+            self.tss_model.process_action(proposal_msg, state_id=0)
+            del self.votes[player_id]
+            self.publish_spawn({
+                "type": "commit",
+                "success": True,
+                "player_id": player_id,
+                "timestamp": proposal_msg["timestamp"],
+                "eventstamp": proposal_msg["eventstamp"]
+        })
+        self.lock.release()
+
+    def add_vote(self, player_id, connection):
+        self.lock.acquire()
+        if self.votes.has_key(player_id):
+            self.votes[player_id].append(connection)
+        else:
+            self.votes[player_id] = [connection]
+        self.lock.release()
+
+    def init_vote(self, player_id):
+        self.lock.acquire()
+        self.votes[player_id] = []
+        self.lock.release()
+
+    def publish_spawn(self, msg):
+        message = "spawn|" + json.dumps(msg)
+        self.publisher.send(message)
 
     def publish_msg_to_peers(self, msg):
         s = "command|"+json.dumps(msg, cls=GameStateEncoder)

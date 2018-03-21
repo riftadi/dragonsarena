@@ -57,15 +57,20 @@ class ClientCommandManager(Thread):
             # if a character spawns, randomize spawning location, hp, and ap
             if parsed_message["type"] == "spawn":
                 parsed_message = self.process_spawn_msg(parsed_message)
+                parsed_message["type"] = "proposal"
+                player_id = parsed_message["player_id"]
+                self.tss_model.lock_cell(parsed_message)
+                self.server_command_duplicator.init_vote(player_id)
+                self.server_command_duplicator.publish_spawn(parsed_message)
+            else:
+                # save the command for state duplication purposes
+                self.message_box.put_message(parsed_message)
 
-            # save the command for state duplication purposes
-            self.message_box.put_message(parsed_message)
-
-            # execute the command right away in the leading state (state_id 0)
-            self.tss_model.process_action(parsed_message, state_id=0)
-            
-            # duplicate command to peers
-            self.server_command_duplicator.publish_msg_to_peers(parsed_message)
+                # execute the command right away in the leading state (state_id 0)
+                self.tss_model.process_action(parsed_message, state_id=0)
+                
+                # duplicate command to peers
+                self.server_command_duplicator.publish_msg_to_peers(parsed_message)
 
         self.socket.close()
 
