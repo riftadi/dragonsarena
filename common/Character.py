@@ -12,6 +12,10 @@ class Character(object):
         self.type = char_type
         self.verbose = verbose
 
+    def __str__(self):
+        return "char:(%s, %s, loc(%d,%d), hp:%d, ap:%d) " % (self.type,
+            self.obj_id, self.x, self.y, self.hp, self.ap)
+
     def get_obj_id(self):
         return self.obj_id
 

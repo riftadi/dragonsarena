@@ -15,12 +15,18 @@ class GameState(object):
         self.human_list = []
         self.dragon_list = []
 
-        self.executed_commands = []
-        self.msg_id_list = []
+        self.executed_msg_ids = []
 
-        # excuted_commands = [{'action_type' : 'spawn', 'msg_id' : 10001, ...},
-        #                     {'action_type' : 'move', 'msg_id' : 10002, ...},
-        #                    ]
+    def __str__(self):
+        hl = []
+        dr = []
+        for human in self.human_list:
+            hl.append(str(human))
+        for dragon in self.dragon_list:
+            dr.append(str(dragon))
+        return "human list: %s\n" % str(hl) + \
+                 "dragon list: %s\n" % str(dr) + \
+                 "msg id list: %s\n" % str(self.executed_msg_ids)
 
     def __deepcopy__(self, memo):
         newone = type(self)()
@@ -49,8 +55,8 @@ class GameState(object):
         for dragon in newone.dragon_list:
             newone.gb.set_object(dragon, dragon.get_x(), dragon.get_y())
 
-        # copy executed commands
-        newone.executed_commands = copy.deepcopy(self.executed_commands)
+        # copy msg_id
+        newone.executed_msg_ids = copy.deepcopy(self.executed_msg_ids)
 
         return newone
 
@@ -73,7 +79,7 @@ class GameState(object):
         """
             Check if there is an action with a specific msg_id, give True is found
         """
-        return msg_id in self.msg_id_list
+        return msg_id in self.executed_msg_ids
 
     def get_object(self, x, y):
         return self.gb.get_object(x, y)
@@ -119,11 +125,12 @@ class GameState(object):
 
     def add_action(self, action):
         """
-            Save action in executed_commands where the keys are msg_id
+            Save msg_id in executed_msg_ids
         """
-        self.executed_commands.append(action)
-        # save the message id in separate list for easy checking
-        self.msg_id_list.append(action["msg_id"])
+        try:
+            self.executed_msg_ids.append(action["msg_id"])
+        except:
+            print "err:%s" % action
 
     def add_character(self, obj):
         # add to gameboard

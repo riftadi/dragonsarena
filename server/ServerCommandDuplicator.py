@@ -23,6 +23,7 @@ class ServerCommandDuplicator(Thread):
         self.heartbeat = {}
         self.votes = {}
         self.lock = Lock()
+        self.last_msg_timestamp = 0
 
         #create ZMQ publisher socket to broadcast our messages
         self.publisher = self.zmq_context.socket(zmq.PUB)
@@ -67,10 +68,10 @@ class ServerCommandDuplicator(Thread):
                         # save the command for state duplication purposes
                         self.message_box.put_message(parsed_message)
 
-                        # execute the command in the leading state if the delay is within 200ms
-                        now = int(round(time.time() * 1000))
-                        if abs(now - parsed_message["timestamp"]) < 200:
+                        # execute the command if the timestamp of the message is newer than last message
+                        if parsed_message["timestamp"] >= self.last_msg_timestamp-200:
                             self.tss_model.process_action(parsed_message, state_id=0)
+                            self.last_msg_timestamp = parsed_message["timestamp"]
 
                     elif message.startswith("alive|") == True:
                         self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()
@@ -119,9 +120,16 @@ class ServerCommandDuplicator(Thread):
                                 proposal_msg = self.tss_model.get_locked(player_id)
                                 proposal_msg["timestamp"] = parsed_message["timestamp"]
                                 proposal_msg["eventstamp"] = parsed_message["eventstamp"]
+                                proposal_msg["msg_id"] = uuid.uuid1(self.server_id).hex
                                 proposal_msg["type"] = "spawn"
-                                # execute the command right away in the leading state (in receiving server)
-                                self.tss_model.process_action(proposal_msg, state_id=0)
+
+                                # save the command for state duplication purposes
+                                self.message_box.put_message(proposal_msg)
+
+                                # execute the command if the timestamp of the message is newer than last message
+                                if proposal_msg["timestamp"] >= self.last_msg_timestamp-200:
+                                    self.tss_model.process_action(proposal_msg, state_id=0)
+                                    self.last_msg_timestamp = parsed_message["timestamp"]
 
                     # other topic goes here
             
@@ -210,6 +218,7 @@ class ServerCommandDuplicator(Thread):
         self.lock.release()
 
     def publish_spawn(self, msg):
+        msg["msg_id"] = uuid.uuid1(self.server_id).hex
         message = "spawn|" + json.dumps(msg)
         self.publisher.send(message)
 
@@ -226,7 +235,8 @@ class ServerCommandDuplicator(Thread):
 
     def publish_alive(self):
         msg = {
-            "timestamp": self.tss_model.get_current_time()
+            "timestamp" : self.tss_model.get_current_time(),
+            "msg_id" : uuid.uuid1(self.server_id).hex
         }
         try:
             self.publisher.send("alive|")

@@ -1,5 +1,6 @@
 import zmq
 import json
+from operator import itemgetter
 
 class MessageBox(object):
     def __init__(self):
@@ -30,10 +31,10 @@ class MessageBox(object):
     def get_messages_within_timestamp(self, time_from, time_until):
         result_list = []
         for msg in self.message_box:
-            if msg["timestamp"] > time_from and msg["timestamp"] <= time_until:
+            if msg["timestamp"] >= time_from and msg["timestamp"] < time_until:
                 result_list.append(msg)
 
-        return result_list
+        return sorted(result_list, key=itemgetter("timestamp", "msg_id"))
 
     def get_unchecked_messages(self):
         result_list = []
@@ -43,9 +44,10 @@ class MessageBox(object):
                 result_list.append(msg)
                 msg["trailing1_checked"] = True
 
-        return result_list
+        return sorted(result_list, key=itemgetter("timestamp", "msg_id"))
 
     def put_message(self, input_dict):
         self.msg_counter += 1
         input_dict["trailing1_checked"] = False
+
         self.message_box.append(input_dict)
