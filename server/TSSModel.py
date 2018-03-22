@@ -51,12 +51,15 @@ class TSSModel(object):
         # return empty list it doesn't exist
         boundary_time = self.get_current_time() - CLIENT_TIMEOUT_DELAY
         result = []
-        for key, val in self.client_last_seen_time.iteritems():
-            obj = self.get_object_by_id(key)
-            # only human can be retrieved
-            if obj != None:
-                if obj.get_type() == 'h' and val < boundary_time:
-                    result.append(key)
+        try:
+            for key, val in self.client_last_seen_time.iteritems():
+                obj = self.get_object_by_id(key)
+                # only human can be retrieved
+                if obj != None:
+                    if obj.get_type() == 'h' and val < boundary_time:
+                        result.append(key)
+        except RuntimeError as e:
+            print e
                     
         return result
 
