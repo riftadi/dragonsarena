@@ -49,7 +49,7 @@ class TSSModel(object):
     def get_unactive_player_ids(self):
         # get players with last seen less than a specified time
         # return empty list it doesn't exist
-        boundary_time = self.get_current_time() - CLIENT_TIMEOUT_DELAY
+        boundary_time = self.get_current_time() - SERVERSIDE_CLIENT_TIMEOUT
         result = []
         try:
             for key, val in self.client_last_seen_time.iteritems():

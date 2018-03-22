@@ -4,6 +4,7 @@ import zmq
 from client.bot.Bot import HumanBot, DragonBot
 from client.ClientSideCommandSender import ClientSideCommandSender
 from client.GameStateUpdater import GameStateUpdater
+from common.settings import *
 
 class Client(object):
     def __init__(self, publisher_url, command_url, player_type, player_id, verbose=True):
@@ -31,6 +32,24 @@ class Client(object):
             self.bot = DragonBot(self.player_id, self.msg_sender, self.gsu, self.verbose)
         self.bot.start()
 
+    def change_server(self, new_publisher_url, new_command_url):
+        # change server to a new one
+        self.publisher_url = new_publisher_url
+        self.command_url = new_command_url
+
+        # destroy old workers
+        self.msg_sender.terminate()
+        self.stop_gamestate_updater()
+        self.gsu.join()
+
+        # start new one
+        self.gsu = GameStateUpdater(self.zmq_root_context, publisher_url=self.publisher_url)
+        self.gsu.start()
+        self.msg_sender = ClientSideCommandSender(self.zmq_root_context, command_url=self.command_url)
+
+        # update bot
+        self.bot.change_workers(self.msg_sender, self.gsu)
+
     def spawn_character(self):
         msg = {
             "type" : "spawn",
@@ -52,6 +71,9 @@ class Client(object):
 
     def is_char_alive(self):
         return self.bot.is_char_alive()
+
+    def is_server_timeout(self):
+        return self.gsu.is_server_timeout()
 
     def stop_gamestate_updater(self):
         self.gsu.stop()

@@ -4,6 +4,7 @@ import threading
 import time
 
 from common.JSONEncoder import GameStateParser
+from common.SocketWrapper import SocketWrapper
 from common.settings import *
 
 class GameStateUpdater(threading.Thread):
@@ -19,6 +20,9 @@ class GameStateUpdater(threading.Thread):
         self.subscriber.setsockopt(zmq.SUBSCRIBE, "gamestate")
         # CONFLATE means save only latest message in queue
         self.subscriber.setsockopt(zmq.CONFLATE, 1)
+        self.subscriber_non_blocking = SocketWrapper(self.subscriber)
+        self.last_gamestate_update_time = 0
+        self.server_timeout_flag = False
 
         self.quit_flag = False
 
@@ -26,17 +30,20 @@ class GameStateUpdater(threading.Thread):
         while self.is_game_running():
             # update gamestate periodically
             try:
-                message = self.subscriber.recv()
+                message = self.subscriber_non_blocking.recv(timeout=CLIENTSIDE_UPDATE_TIMEOUT)
             except:
+                self.server_timeout_flag = True
                 continue
 
             if message.startswith("gamestate|") == True:
+                now = int(round(time.time() * 1000))
+                self.last_gamestate_update_time = now
                 msg = message[10:]
                 parser = GameStateParser()
                 game_running_flag, self.gamestate = parser.parse(msg)
 
                 if game_running_flag == False:
-                    self.stop_game()
+                    self.stop()
 
             # other topic goes here, if any
 
@@ -44,14 +51,17 @@ class GameStateUpdater(threading.Thread):
 
         self.subscriber.close()
 
-    def stop_game(self):
-        self.quit_flag = True
+    def is_server_timeout(self):
+        return self.server_timeout_flag
 
     def is_game_running(self):
         return not self.quit_flag
 
     def stop(self):
         self.quit_flag = True
+
+    def get_last_gamestate_update_time(self):
+        return self.last_gamestate_update_time
 
     def get_gamestate(self):
         return self.gamestate

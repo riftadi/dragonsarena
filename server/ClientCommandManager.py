@@ -36,7 +36,7 @@ class ClientCommandManager(Thread):
             # WARNING: the default recv() function is BLOCKING, use with caution!
             # here we use a wrapped non-blocking version
             try:
-                json_message = self.socket_non_blocking.recv(timeout=10000)
+                json_message = self.socket_non_blocking.recv(timeout=5000)
             except:
                 continue
 
