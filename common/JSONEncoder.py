@@ -15,6 +15,7 @@ class GameStateEncoder(json.JSONEncoder):
                 "x": obj.x,
                 "y": obj.y,
                 "hp": obj.hp,
+                "max_hp": obj.max_hp,
                 "type": obj.type
             }
 
@@ -43,7 +44,7 @@ class GameStateParser():
 
     def createCharacter(self, char):
         if char["type"] == "h":
-            return Human(char["id"], char["id"],char["hp"],0,char["x"], char["y"], False)
+            return Human(char["id"], char["id"],char["hp"],char["max_hp"],0,char["x"], char["y"], False)
         else:
-            return Dragon(char["id"], char["id"],char["hp"],0,char["x"], char["y"], False)
+            return Dragon(char["id"], char["id"],char["hp"],char["max_hp"],0,char["x"], char["y"], False)
 

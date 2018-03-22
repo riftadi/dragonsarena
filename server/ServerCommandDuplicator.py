@@ -66,12 +66,14 @@ class ServerCommandDuplicator(Thread):
                         new_clock = max(curr_clock, msg_clock) + 1
                         self.tss_model.set_event_clock(new_clock)
 
+                        self.tss_model.update_client_last_seen_time(parsed_message["player_id"])
+
                         # save the command for state duplication purposes
                         self.message_box.put_message(parsed_message)
 
                         # execute the command if the timestamp of the message is newer than last message
                         if parsed_message["timestamp"] >= self.last_msg_timestamp-MSG_LATE_DELAY_BUDGET:
-                            self.tss_model.process_action(parsed_message, state_id=0)
+                            self.tss_model.process_action(parsed_message, state_id=LEADING_STATE)
                             self.last_msg_timestamp = parsed_message["timestamp"]
 
                     elif message.startswith("alive|") == True:
@@ -131,7 +133,7 @@ class ServerCommandDuplicator(Thread):
                                 self.message_box.put_message(proposal_msg)
 
                                 # execute the command right away
-                                self.tss_model.process_action(proposal_msg, state_id=0)
+                                self.tss_model.process_action(proposal_msg, state_id=LEADING_STATE)
 
                     # other topic goes here
             
@@ -195,7 +197,7 @@ class ServerCommandDuplicator(Thread):
             proposal_msg["timestamp"] = int(round(time.time() * 1000))
             proposal_msg["type"] = "spawn"
             # execute in proposing server
-            self.tss_model.process_action(proposal_msg, state_id=0)
+            self.tss_model.process_action(proposal_msg, state_id=LEADING_STATE)
             del self.votes[player_id]
             self.publish_spawn({
                 "type": "commit",
@@ -203,7 +205,7 @@ class ServerCommandDuplicator(Thread):
                 "player_id": player_id,
                 "timestamp": proposal_msg["timestamp"],
                 "eventstamp": proposal_msg["eventstamp"]
-        })
+            })
         self.lock.release()
 
     def add_vote(self, player_id, connection):

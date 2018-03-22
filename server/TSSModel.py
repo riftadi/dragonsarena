@@ -34,8 +34,38 @@ class TSSModel(object):
 
         # locked cells if in the spawning phase
         self.locked_cells = []
+        self.client_last_seen_time = {}
 
         self.players_and_dragons_have_spawned_flag = False
+
+    def update_client_last_seen_time(self, pl_id):
+        self.client_last_seen_time[pl_id] = self.game_timer
+
+    def get_client_last_seen_time(self, pl_id):
+        # get last seen time of player pl_id
+        # return None if it doesn't exist
+        return self.client_last_seen_time.get(pl_id)
+
+    def get_unactive_player_ids(self):
+        # get players with last seen less than a specified time
+        # return empty list it doesn't exist
+        boundary_time = self.get_current_time() - SERVERSIDE_CLIENT_TIMEOUT
+        result = []
+        try:
+            for key, val in self.client_last_seen_time.iteritems():
+                obj = self.get_object_by_id(key)
+                # only human can be retrieved
+                if obj != None:
+                    if obj.get_type() == 'h' and val < boundary_time:
+                        result.append(key)
+        except RuntimeError as e:
+            print e
+                    
+        return result
+
+    def get_offline_player_state_by_id(self, obj_id):
+        # get info on offline character, return None if it does not exist
+        return self.leadingstate.get_offline_player_state_by_id(obj_id)
 
     def prepare_rollback(self, command_list):
         self.tempstate = copy.deepcopy(self.trailingstate01)
@@ -160,15 +190,16 @@ class TSSModel(object):
             y = action["y"]
 
             hp = action["hp"]
+            max_hp = action["max_hp"]
             ap = action["ap"]
 
             new_obj = None
-            if obj_type == 'human':
+            if obj_type == 'h':
                 new_obj = Human(obj_id, obj_name,
-                    hp, ap, x, y, verbose=self.verbose)
-            elif obj_type == 'dragon':
+                    hp, max_hp, ap, x, y, verbose=self.verbose)
+            elif obj_type == 'd':
                 new_obj = Dragon(obj_id, obj_name,
-                    hp, ap, x, y, verbose=self.verbose)
+                    hp, max_hp, ap, x, y, verbose=self.verbose)
 
             state.add_character(new_obj)
 
@@ -182,6 +213,11 @@ class TSSModel(object):
             if not self.players_and_dragons_have_spawned_flag:
                 if state.get_human_count() > 0 and state.get_dragon_count() > 0:
                     self.players_and_dragons_have_spawned_flag = True
+
+        elif action_type == "off":
+            # a player is offline
+            obj_id = action["player_id"]
+            state.make_offline(obj_id)
 
         elif action_type == "move":
             # move a character

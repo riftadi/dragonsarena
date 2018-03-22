@@ -239,7 +239,7 @@ This class is responsible to duplicate commands received from the clients to pee
 
 #### TSSManager
 
-This class is responsible for TSS state checking and rollback management. Currently, there is only one trailing state implemented.
+This class is responsible for TSS state checking and rollback management. Currently, there is only one trailing state implemented. It also checks for stale players and respond accordingly.
 
 ## client
 
