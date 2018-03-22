@@ -3,6 +3,7 @@ import json
 import time
 import uuid
 from threading import Thread, Lock
+from random import randint
 
 from server.TSSModel import TSSModel
 from common.JSONEncoder import GameStateEncoder
@@ -103,15 +104,23 @@ class ServerCommandDuplicator(Thread):
 
                             if self.votes.has_key(player_id) == True:
                                 if vote == False:
+                                    old_message = self.tss_model.get_locked(player_id)
                                     self.tss_model.unlock_cell(player_id)
                                     self.lock.acquire()
                                     del self.votes[player_id]
                                     self.lock.release()
+                                    # Abort current round
                                     self.publish_spawn({
                                         "type": "commit",
                                         "success": False,
                                         "player_id": player_id
                                     })
+                                    # start new vote
+                                    new_proposal = self.process_spawn_msg(old_message)
+                                    self.tss_model.lock_cell(new_proposal)
+                                    self.init_vote(player_id)
+                                    self.publish_spawn(new_proposal)
+
                                 else:
                                     self.add_vote(player_id, subscription.LAST_ENDPOINT[6:])
                         elif parsed_message["type"] == "commit":
@@ -246,3 +255,39 @@ class ServerCommandDuplicator(Thread):
             self.publisher.send("alive|")
         except:
             pass
+
+    def process_spawn_msg(self, parsed_message):
+        # generate randomized x, y, hp and ap for characters in the message
+
+        # check if it's offline before
+        prev_state = self.tss_model.get_offline_player_state_by_id(parsed_message["player_id"])
+        if prev_state != None:
+            # it is a returning client, get its information back
+            parsed_message["hp"] = prev_state["hp"]
+            parsed_message["max_hp"] = prev_state["max_hp"]
+            parsed_message["ap"] = prev_state["ap"]
+            parsed_message["player_type"] = prev_state["type"]
+            # ignore previous state location info as they might be used by another character
+
+        else:
+            # it's a new character
+            if parsed_message["player_type"] == "h":
+                parsed_message["hp"] = randint(11,20)
+                parsed_message["max_hp"] = parsed_message["hp"]
+                parsed_message["ap"] = randint(1,10)
+            elif parsed_message["player_type"] == "d":
+                parsed_message["hp"] = randint(50,100)
+                parsed_message["max_hp"] = parsed_message["hp"]
+                parsed_message["ap"] = randint(5,20)
+
+        safely_placed = False
+        while not safely_placed:
+            prop_x = randint(0, 24)
+            prop_y = randint(0, 24)
+
+            if self.tss_model.get_object(prop_x, prop_y) == None:
+                safely_placed = True
+                parsed_message["x"] = prop_x
+                parsed_message["y"] = prop_y
+
+        return parsed_message

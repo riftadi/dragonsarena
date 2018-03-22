@@ -2,7 +2,6 @@ import zmq
 import json
 import time
 import uuid
-from random import randint
 from threading import Thread
 
 from server.TSSModel import TSSModel
@@ -59,7 +58,7 @@ class ClientCommandManager(Thread):
 
             # if a character spawns, randomize spawning location, hp, and ap
             if parsed_message["type"] == "spawn":
-                parsed_message = self.process_spawn_msg(parsed_message)
+                parsed_message = self.server_command_duplicator.process_spawn_msg(parsed_message)
                 parsed_message["type"] = "proposal"
                 player_id = parsed_message["player_id"]
                 self.tss_model.lock_cell(parsed_message)
@@ -76,39 +75,3 @@ class ClientCommandManager(Thread):
                 self.server_command_duplicator.publish_msg_to_peers(parsed_message)
 
         self.socket.close()
-
-    def process_spawn_msg(self, parsed_message):
-        # generate randomized x, y, hp and ap for characters in the message
-
-        # check if it's offline before
-        prev_state = self.tss_model.get_offline_player_state_by_id(parsed_message["player_id"])
-        if prev_state != None:
-            # it is a returning client, get its information back
-            parsed_message["hp"] = prev_state["hp"]
-            parsed_message["max_hp"] = prev_state["max_hp"]
-            parsed_message["ap"] = prev_state["ap"]
-            parsed_message["player_type"] = prev_state["type"]
-            # ignore previous state location info as they might be used by another character
-
-        else:
-            # it's a new character
-            if parsed_message["player_type"] == "h":
-                parsed_message["hp"] = randint(11,20)
-                parsed_message["max_hp"] = parsed_message["hp"]
-                parsed_message["ap"] = randint(1,10)
-            elif parsed_message["player_type"] == "d":
-                parsed_message["hp"] = randint(50,100)
-                parsed_message["max_hp"] = parsed_message["hp"]
-                parsed_message["ap"] = randint(5,20)
-
-        safely_placed = False
-        while not safely_placed:
-            prop_x = randint(0, 24)
-            prop_y = randint(0, 24)
-
-            if self.tss_model.get_object(prop_x, prop_y) == None:
-                safely_placed = True
-                parsed_message["x"] = prop_x
-                parsed_message["y"] = prop_y
-
-        return parsed_message

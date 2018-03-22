@@ -39,7 +39,9 @@ class TSSModel(object):
         self.players_and_dragons_have_spawned_flag = False
 
     def update_client_last_seen_time(self, pl_id):
+        self.lock.acquire()
         self.client_last_seen_time[pl_id] = self.game_timer
+        self.lock.release()
 
     def get_client_last_seen_time(self, pl_id):
         # get last seen time of player pl_id
@@ -51,6 +53,7 @@ class TSSModel(object):
         # return empty list it doesn't exist
         boundary_time = self.get_current_time() - SERVERSIDE_CLIENT_TIMEOUT
         result = []
+        self.lock.acquire()
         try:
             for key, val in self.client_last_seen_time.iteritems():
                 obj = self.get_object_by_id(key)
@@ -60,6 +63,8 @@ class TSSModel(object):
                         result.append(key)
         except RuntimeError as e:
             print e
+        finally:
+            self.lock.release()
                     
         return result
 
