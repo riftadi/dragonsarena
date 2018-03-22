@@ -1,23 +1,29 @@
 import json
 import time
+import uuid
 from threading import Thread
 
 from server.TSSModel import TSSModel
+from common.settings import *
 
 class TSSManager(Thread):
     """
         This class is responsible to maintain all TSS states
         in the TSS model class. The execution of commands in
         the trailing states is the main task of this class.
+        It also checks for stale players and respond accordingly.
     """
-    def __init__(self, tss_model, message_box, absolute_game_start_time):
+    def __init__(self, tss_model, message_box, server_command_duplicator, server_id, absolute_game_start_time):
         Thread.__init__(self)
         self.tss_model = tss_model
         self.message_box = message_box
+        self.server_command_duplicator = server_command_duplicator
         self.absolute_game_start_time = absolute_game_start_time
+        self.server_id = server_id
 
         self.trailing1_delay = 400
         self.start_checking_flag = False
+        self.stale_counter = 0
 
         now = int(round(time.time() * 1000))
         self.trailing1_execution_time = now
@@ -34,7 +40,41 @@ class TSSManager(Thread):
             else:
                 self.execute_state(state_id=1, curr_time=now)
 
+            if self.stale_counter % 5 == 4:
+                self.manage_stale_players()
+            self.stale_counter += 1
+            
             time.sleep(float(self.trailing1_delay)/1000.0)
+
+    def manage_stale_players(self):
+        unactive_player_ids = self.tss_model.get_unactive_player_ids()
+
+        if len(unactive_player_ids) > 0:
+            for unpid in unactive_player_ids:
+                print "player %s offline, saving state.." % unpid
+                msg = {}
+                msg["player_id"] = unpid
+                msg["type"] = "off"
+
+                # increment lamport clock
+                self.tss_model.increase_event_clock()
+
+                # add lamport clock to our message
+                msg["eventstamp"] = self.tss_model.get_event_clock()
+                # add local clock to our message
+                msg["timestamp"] = int(round(time.time() * 1000))
+                # seed the msg_id with our server_id so that it is unique globally
+                msg["msg_id"] = uuid.uuid1(self.server_id).hex
+                msg["server_id"] = self.server_id
+
+                # save the command for state duplication purposes
+                self.message_box.put_message(msg)
+
+                # execute the command right away in the leading state
+                self.tss_model.process_action(msg, state_id=LEADING_STATE)
+                
+                # duplicate command to peers
+                self.server_command_duplicator.publish_msg_to_peers(msg)
 
     def execute_state(self, state_id, curr_time):
         action_list = []

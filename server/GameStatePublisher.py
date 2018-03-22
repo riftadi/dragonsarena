@@ -5,13 +5,14 @@ from threading import Thread
 
 from server.TSSModel import TSSModel
 from common.JSONEncoder import GameStateEncoder
+from common.settings import *
 
 class GameStatePublisher(Thread):
     """
         This class is responsible to publish game states
         to ZMQ publisher which will be read by clients.
     """
-    def __init__(self, tss_model, zmq_context, update_delay=500.0, publisher="0.0.0.0:8181"):
+    def __init__(self, tss_model, zmq_context, update_delay=GAMESTATE_PUBLISH_DELAY, publisher="0.0.0.0:8181"):
         Thread.__init__(self)
 
         self.message_box = []

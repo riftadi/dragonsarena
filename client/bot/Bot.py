@@ -3,9 +3,7 @@ from random import randint
 from threading import Thread
 
 from common.GameState import GameState
-
-MIN_DELAY = 1000
-MAX_DELAY = 3000
+from common.settings import *
 
 class Bot(Thread):
     def __init__(self, obj_id, msg_sender, gamestate_updater, verbose):
@@ -19,37 +17,42 @@ class Bot(Thread):
 
         self.obj = None
 
-        self.random_delay = float(randint(MIN_DELAY,MAX_DELAY))
+        self.random_delay = float(randint(CHAR_MIN_DELAY, CHAR_MAX_DELAY))
 
         self.gamestate = None
-        while self.gamestate == None:
-            self.update_gamestate()
-            time.sleep(0.2)
+        # while self.gamestate == None:
+        #     self.update_gamestate()
+        #     time.sleep(0.2)
 
     def run(self):
         # randomize time so that bots are not synchronized
         time.sleep(float(randint(100,800))/1000.0)
         #wait till character object is set
-        while self.obj == None:
-            self.obj = self.gamestate.get_object_by_id(self.obj_id)
+        # while self.obj == None:
+        #     self.obj = self.gamestate.get_object_by_id(self.obj_id)
 
         # check if the game is running and we are still alive
         while self.is_game_running() and self.is_char_alive():
-            # update obj
-            self.obj = self.gamestate.get_object_by_id(self.obj_id)
+            if self.gamestate != None:
+                # update obj
+                self.obj = self.gamestate.get_object_by_id(self.obj_id)
 
-            if self.obj == None:
-                # we exist no more in the gameboard
-                if self.char_gone_counter > 10:
-                    self.char_alive_flag = False
+                if self.obj == None:
+                    # we exist no more in the gameboard
+                    if self.char_gone_counter > BOT_CLOSING_WAIT_TIME:
+                        self.char_alive_flag = False
+                    else:
+                        self.char_gone_counter += 1
                 else:
-                    self.char_gone_counter += 1
-            else:
-                self.do_best_action()
+                    self.do_best_action()
             
             time.sleep(self.random_delay/1000.0)
 
         print "Player %s is dead, exiting bot.." % self.obj_id
+
+    def change_workers(self, msg_sender, gamestate_updater):
+        self.msg_sender = msg_sender
+        self.gamestate_updater = gamestate_updater
 
     def is_char_alive(self):
         return self.char_alive_flag

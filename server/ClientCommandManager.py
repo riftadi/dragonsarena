@@ -8,6 +8,7 @@ from threading import Thread
 from server.TSSModel import TSSModel
 from common.JSONEncoder import GameStateEncoder
 from common.SocketWrapper import SocketWrapper
+from common.settings import *
 
 class ClientCommandManager(Thread):
     """
@@ -35,7 +36,7 @@ class ClientCommandManager(Thread):
             # WARNING: the default recv() function is BLOCKING, use with caution!
             # here we use a wrapped non-blocking version
             try:
-                json_message = self.socket_non_blocking.recv(timeout=10000)
+                json_message = self.socket_non_blocking.recv(timeout=5000)
             except:
                 continue
 
@@ -43,6 +44,8 @@ class ClientCommandManager(Thread):
             self.socket.send(b"{'status' : 'ok'}")
 
             parsed_message = json.loads(json_message)
+            # update client last seen time
+            self.tss_model.update_client_last_seen_time(parsed_message["player_id"])
 
             # an event from client arrived, increase our lamport clock
             self.tss_model.increase_event_clock()
@@ -66,8 +69,8 @@ class ClientCommandManager(Thread):
                 # save the command for state duplication purposes
                 self.message_box.put_message(parsed_message)
 
-                # execute the command right away in the leading state (state_id 0)
-                self.tss_model.process_action(parsed_message, state_id=0)
+                # execute the command right away in the leading state
+                self.tss_model.process_action(parsed_message, state_id=LEADING_STATE)
                 
                 # duplicate command to peers
                 self.server_command_duplicator.publish_msg_to_peers(parsed_message)
@@ -77,12 +80,26 @@ class ClientCommandManager(Thread):
     def process_spawn_msg(self, parsed_message):
         # generate randomized x, y, hp and ap for characters in the message
 
-        if parsed_message["player_type"] == "human":
-            parsed_message["hp"] = randint(11,20)
-            parsed_message["ap"] = randint(1,10)
-        elif parsed_message["player_type"] == "dragon":
-            parsed_message["hp"] = randint(50,100)
-            parsed_message["ap"] = randint(5,20)
+        # check if it's offline before
+        prev_state = self.tss_model.get_offline_player_state_by_id(parsed_message["player_id"])
+        if prev_state != None:
+            # it is a returning client, get its information back
+            parsed_message["hp"] = prev_state["hp"]
+            parsed_message["max_hp"] = prev_state["max_hp"]
+            parsed_message["ap"] = prev_state["ap"]
+            parsed_message["player_type"] = prev_state["type"]
+            # ignore previous state location info as they might be used by another character
+
+        else:
+            # it's a new character
+            if parsed_message["player_type"] == "h":
+                parsed_message["hp"] = randint(11,20)
+                parsed_message["max_hp"] = parsed_message["hp"]
+                parsed_message["ap"] = randint(1,10)
+            elif parsed_message["player_type"] == "d":
+                parsed_message["hp"] = randint(50,100)
+                parsed_message["max_hp"] = parsed_message["hp"]
+                parsed_message["ap"] = randint(5,20)
 
         safely_placed = False
         while not safely_placed:
