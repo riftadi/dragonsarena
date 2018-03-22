@@ -3,9 +3,7 @@ from random import randint
 from threading import Thread
 
 from common.GameState import GameState
-
-MIN_DELAY = 1000
-MAX_DELAY = 3000
+from common.settings import *
 
 class Bot(Thread):
     def __init__(self, obj_id, msg_sender, gamestate_updater, verbose):
@@ -19,7 +17,7 @@ class Bot(Thread):
 
         self.obj = None
 
-        self.random_delay = float(randint(MIN_DELAY,MAX_DELAY))
+        self.random_delay = float(randint(CHAR_MIN_DELAY, CHAR_MAX_DELAY))
 
         self.gamestate = None
         while self.gamestate == None:
@@ -40,7 +38,7 @@ class Bot(Thread):
 
             if self.obj == None:
                 # we exist no more in the gameboard
-                if self.char_gone_counter > 10:
+                if self.char_gone_counter > BOT_CLOSING_WAIT_TIME:
                     self.char_alive_flag = False
                 else:
                     self.char_gone_counter += 1

@@ -6,6 +6,7 @@ import json
 
 from common.GameState import GameState
 from common.Character import *
+from common.settings import *
 
 ### --TODO-- THIS CLASS IS NOT WORKER CLASS, SO NO THREAD BELONG HERE
 class TSSModel(object):
@@ -38,10 +39,10 @@ class TSSModel(object):
 
     def prepare_rollback(self, command_list):
         self.tempstate = copy.deepcopy(self.trailingstate01)
-        self.process_action_list(command_list, state_id=9)
+        self.process_action_list(command_list, state_id=TEMP_STATE)
 
     def rollback_state(self, command_list):
-        self.process_action_list(command_list, state_id=9)
+        self.process_action_list(command_list, state_id=TEMP_STATE)
         self.leadingstate = self.tempstate
 
     def get_event_clock(self):
@@ -124,16 +125,16 @@ class TSSModel(object):
     def get_firsttrailingstate(self):
         return self.trailingstate01
 
-    def process_action(self, action, state_id=0):
+    def process_action(self, action, state_id=LEADING_STATE):
         # check which state the action is going to be applied to
         # state_id possible values: leading (0), trailing1 (1)
         state = None
 
-        if state_id == 0:
+        if state_id == LEADING_STATE:
             state = self.leadingstate
-        elif state_id == 1:
+        elif state_id == TRAILING_01_STATE:
             state = self.trailingstate01
-        elif state_id == 9:
+        elif state_id == TEMP_STATE:
             state = self.tempstate
 
         # save action for checking purpose in the trailing states
@@ -206,7 +207,7 @@ class TSSModel(object):
 
             state.heal(obj_id, target_id)
 
-    def process_action_list(self, action_list, state_id=0):
+    def process_action_list(self, action_list, state_id=LEADING_STATE):
         for action in action_list:
             self.process_action(action, state_id)
 

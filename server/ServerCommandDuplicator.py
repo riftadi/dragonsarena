@@ -7,6 +7,7 @@ from threading import Thread, Lock
 from server.TSSModel import TSSModel
 from common.JSONEncoder import GameStateEncoder
 from common.SocketWrapper import SocketWrapper
+from common.settings import *
 
 class ServerCommandDuplicator(Thread):
     """
@@ -24,7 +25,6 @@ class ServerCommandDuplicator(Thread):
         self.votes = {}
         self.lock = Lock()
         self.last_msg_timestamp = 0
-        self.delay_budget = 300
 
         #create ZMQ publisher socket to broadcast our messages
         self.publisher = self.zmq_context.socket(zmq.PUB)
@@ -70,7 +70,7 @@ class ServerCommandDuplicator(Thread):
                         self.message_box.put_message(parsed_message)
 
                         # execute the command if the timestamp of the message is newer than last message
-                        if parsed_message["timestamp"] >= self.last_msg_timestamp-self.delay_budget:
+                        if parsed_message["timestamp"] >= self.last_msg_timestamp-MSG_LATE_DELAY_BUDGET:
                             self.tss_model.process_action(parsed_message, state_id=0)
                             self.last_msg_timestamp = parsed_message["timestamp"]
 

@@ -8,6 +8,7 @@ from server.ClientCommandManager import ClientCommandManager
 from server.GameStatePublisher import GameStatePublisher
 from server.ServerCommandDuplicator import ServerCommandDuplicator
 from server.TSSManager import TSSManager
+from common.settings import *
 
 class Server(object):
     def __init__(self, server_id, host, peers, verbose=True):
@@ -31,7 +32,7 @@ class Server(object):
 
         # CONTROLLER (WORKER) CLASSES INSTANTIATION
         # start clock and winning condition updater worker
-        self.clock_winning_worker = GameClockManager(self.T, self.msg_box, update_delay=10.0)
+        self.clock_winning_worker = GameClockManager(self.T, self.msg_box, update_delay=GAMECLOCK_UPDATE_DELAY)
         self.clock_winning_worker.start()
 
         # start client facing game state publisher
@@ -54,13 +55,13 @@ class Server(object):
 
     def mainloop(self):
         while self.T.is_game_running():
-            # just sleep for 500ms while checking if the game is still running
-            time.sleep(500.0/1000.0)
+            # just sleep for SERVER_MAIN_LOOP_DELAY while checking if the game is still running
+            time.sleep(SERVER_MAIN_LOOP_DELAY/1000.0)
 
         print "Ending games.."
         # give a few seconds delay to give opportunity for publisher_worker to broadcast
         # that the game is already finished
-        time.sleep(5)
+        time.sleep(WAIT_DELAY_AFTER_GAME_END/1000)
         self.publisher_worker.stop_publishing()
 
         # game is finished, cleaning up worker threads

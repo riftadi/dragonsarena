@@ -8,6 +8,7 @@ from threading import Thread
 from server.TSSModel import TSSModel
 from common.JSONEncoder import GameStateEncoder
 from common.SocketWrapper import SocketWrapper
+from common.settings import *
 
 class ClientCommandManager(Thread):
     """
@@ -66,8 +67,8 @@ class ClientCommandManager(Thread):
                 # save the command for state duplication purposes
                 self.message_box.put_message(parsed_message)
 
-                # execute the command right away in the leading state (state_id 0)
-                self.tss_model.process_action(parsed_message, state_id=0)
+                # execute the command right away in the leading state
+                self.tss_model.process_action(parsed_message, state_id=LEADING_STATE)
                 
                 # duplicate command to peers
                 self.server_command_duplicator.publish_msg_to_peers(parsed_message)
