@@ -24,6 +24,7 @@ class ServerCommandDuplicator(Thread):
         self.votes = {}
         self.lock = Lock()
         self.last_msg_timestamp = 0
+        self.delay_budget = 300
 
         #create ZMQ publisher socket to broadcast our messages
         self.publisher = self.zmq_context.socket(zmq.PUB)
@@ -69,7 +70,7 @@ class ServerCommandDuplicator(Thread):
                         self.message_box.put_message(parsed_message)
 
                         # execute the command if the timestamp of the message is newer than last message
-                        if parsed_message["timestamp"] >= self.last_msg_timestamp-200:
+                        if parsed_message["timestamp"] >= self.last_msg_timestamp-self.delay_budget:
                             self.tss_model.process_action(parsed_message, state_id=0)
                             self.last_msg_timestamp = parsed_message["timestamp"]
 
@@ -117,6 +118,9 @@ class ServerCommandDuplicator(Thread):
                             if success == False:
                                 self.tss_model.unlock_cell(player_id)
                             else:
+                                # spawning, increment our lamport clock
+                                self.tss_model.increase_event_clock()
+
                                 proposal_msg = self.tss_model.get_locked(player_id)
                                 proposal_msg["timestamp"] = parsed_message["timestamp"]
                                 proposal_msg["eventstamp"] = parsed_message["eventstamp"]
@@ -126,10 +130,8 @@ class ServerCommandDuplicator(Thread):
                                 # save the command for state duplication purposes
                                 self.message_box.put_message(proposal_msg)
 
-                                # execute the command if the timestamp of the message is newer than last message
-                                if proposal_msg["timestamp"] >= self.last_msg_timestamp-200:
-                                    self.tss_model.process_action(proposal_msg, state_id=0)
-                                    self.last_msg_timestamp = parsed_message["timestamp"]
+                                # execute the command right away
+                                self.tss_model.process_action(proposal_msg, state_id=0)
 
                     # other topic goes here
             

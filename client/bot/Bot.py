@@ -40,7 +40,7 @@ class Bot(Thread):
 
             if self.obj == None:
                 # we exist no more in the gameboard
-                if self.char_gone_counter > 3:
+                if self.char_gone_counter > 10:
                     self.char_alive_flag = False
                 else:
                     self.char_gone_counter += 1

@@ -36,16 +36,13 @@ class TSSModel(object):
 
         self.players_and_dragons_have_spawned_flag = False
 
-    def rollback_state(self, command_list):
-        # print "before:"
-        # print self.leadingstate
-        # rollback to previous state and re-executes commands
+    def prepare_rollback(self, command_list):
         self.tempstate = copy.deepcopy(self.trailingstate01)
-        # execute all actions until current time to leading state
+        self.process_action_list(command_list, state_id=9)
+
+    def rollback_state(self, command_list):
         self.process_action_list(command_list, state_id=9)
         self.leadingstate = self.tempstate
-        # print "after:"
-        # print self.leadingstate
 
     def get_event_clock(self):
         return self.event_clock

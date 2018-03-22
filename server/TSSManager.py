@@ -16,7 +16,7 @@ class TSSManager(Thread):
         self.message_box = message_box
         self.absolute_game_start_time = absolute_game_start_time
 
-        self.trailing1_delay = 500
+        self.trailing1_delay = 400
         self.start_checking_flag = False
 
         now = int(round(time.time() * 1000))
@@ -53,6 +53,10 @@ class TSSManager(Thread):
                 # repair our leadingstate
                 # rollback to previous state and reexecutes commands
                 command_list = self.message_box.get_messages_within_timestamp(self.trailing1_execution_time, curr_time)
+                self.tss_model.prepare_rollback(command_list=command_list)
+                last_time = curr_time
+                now = int(round(time.time() * 1000)) + 10000
+                command_list = self.message_box.get_messages_within_timestamp(last_time, now)
                 self.tss_model.rollback_state(command_list=command_list)
 
         if (len(action_list) > 0):

@@ -13,7 +13,7 @@ sleep 3
 
 # let's spawn all humans to randomized server
 
-for run in {1..100}
+for run in {1..200}
 do
  python -m client.run_client &
 done
