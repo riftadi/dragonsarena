@@ -44,6 +44,8 @@ class ClientCommandManager(Thread):
             self.socket.send(b"{'status' : 'ok'}")
 
             parsed_message = json.loads(json_message)
+            # update client last seen time
+            self.tss_model.update_client_last_seen_time(parsed_message["player_id"])
 
             # an event from client arrived, increase our lamport clock
             self.tss_model.increase_event_clock()
@@ -78,12 +80,26 @@ class ClientCommandManager(Thread):
     def process_spawn_msg(self, parsed_message):
         # generate randomized x, y, hp and ap for characters in the message
 
-        if parsed_message["player_type"] == "human":
-            parsed_message["hp"] = randint(11,20)
-            parsed_message["ap"] = randint(1,10)
-        elif parsed_message["player_type"] == "dragon":
-            parsed_message["hp"] = randint(50,100)
-            parsed_message["ap"] = randint(5,20)
+        # check if it's offline before
+        prev_state = self.tss_model.get_offline_player_state_by_id(parsed_message["player_id"])
+        if prev_state != None:
+            # it is a returning client, get its information back
+            parsed_message["hp"] = prev_state["hp"]
+            parsed_message["max_hp"] = prev_state["max_hp"]
+            parsed_message["ap"] = prev_state["ap"]
+            parsed_message["player_type"] = prev_state["type"]
+            # ignore previous state location info as they might be used by another character
+
+        else:
+            # it's a new character
+            if parsed_message["player_type"] == "h":
+                parsed_message["hp"] = randint(11,20)
+                parsed_message["max_hp"] = parsed_message["hp"]
+                parsed_message["ap"] = randint(1,10)
+            elif parsed_message["player_type"] == "d":
+                parsed_message["hp"] = randint(50,100)
+                parsed_message["max_hp"] = parsed_message["hp"]
+                parsed_message["ap"] = randint(5,20)
 
         safely_placed = False
         while not safely_placed:

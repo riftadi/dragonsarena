@@ -50,7 +50,7 @@ class Server(object):
         self.client_command_worker.start()
 
         # start TSS worker
-        self.tss_worker = TSSManager(self.T, self.msg_box, self.absolute_game_start_time)
+        self.tss_worker = TSSManager(self.T, self.msg_box, self.server_cmd_duplicator_worker, self.server_id, self.absolute_game_start_time)
         self.tss_worker.start()
 
     def mainloop(self):

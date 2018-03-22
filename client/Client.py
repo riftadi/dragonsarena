@@ -19,15 +19,15 @@ class Client(object):
 
         # spawn our character
         self.player_id = player_id
-        self.player_type = player_type
+        self.player_type = player_type[0] # only pick its first char ('h' or 'd')
         self.spawn_character()
 
         self.verbose = verbose
 
         # start our bot (automatic controller)
-        if self.player_type == "human":
+        if self.player_type == 'h':
             self.bot = HumanBot(self.player_id, self.msg_sender, self.gsu, self.verbose)
-        else:
+        elif self.player_type == 'd':
             self.bot = DragonBot(self.player_id, self.msg_sender, self.gsu, self.verbose)
         self.bot.start()
 

@@ -27,7 +27,7 @@ class GameClockManager(Thread):
             if (current_time % GAME_WINNING_CONDITION_CHECK_DELAY == 0):
                 self.tss_model.check_game_end_condition()
 
-            # clear message_box every 2000 ms
+            # clear message_box and stale players every 2000 ms
             if (current_time % CLEAR_MESSAGE_BOX_DELAY == 0):
                 self.message_box.delete_checked_messages()
 

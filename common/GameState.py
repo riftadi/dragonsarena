@@ -16,6 +16,45 @@ class GameState(object):
         self.dragon_list = []
 
         self.executed_msg_ids = []
+        self.offline_player_states = []
+
+    def make_offline(self, obj_id):
+        # save a character state in offline_players
+        char = self.get_object_by_id(obj_id)
+        saved_state = {}
+
+        saved_state["obj_id"] = obj_id
+        saved_state["hp"] = char.get_hp()
+        saved_state["max_hp"] = char.get_max_hp()
+        saved_state["ap"] = char.get_ap()
+        saved_state["type"] = char.get_type()
+        saved_state["x"] = char.get_x()
+        saved_state["y"] = char.get_y()
+
+        self.offline_player_states.append(saved_state)
+
+        self.remove_character(char)
+
+    def get_offline_player_state_by_id(self, obj_id):
+        # get info on offline character, return None if it does not exist
+        char_state = None
+        for pl in self.offline_player_states:
+            if pl["obj_id"] == obj_id:
+                char_state = pl
+                break
+
+        return char_state
+
+    def mark_online(self, obj_id):
+        # delete a character state from offline_player_states
+        char_state = None
+        for pl in self.offline_player_states:
+            if pl["obj_id"] == obj_id:
+                char_state = pl
+                break
+
+        if char_state != None:
+            self.offline_player_states.remove(char_state)
 
     def __str__(self):
         hl = []
@@ -57,6 +96,9 @@ class GameState(object):
 
         # copy msg_id
         newone.executed_msg_ids = copy.deepcopy(self.executed_msg_ids)
+
+        # copy offline_player_states
+        newone.offline_player_states = copy.deepcopy(self.offline_player_states)
 
         return newone
 
@@ -133,6 +175,12 @@ class GameState(object):
             print "err:%s" % action
 
     def add_character(self, obj):
+        # if it was previously offline
+        obj_id = obj.get_obj_id()
+        prev_state = self.get_offline_player_state_by_id(obj_id)
+        if prev_state != None:
+            self.mark_online(obj_id)
+
         # add to gameboard
         self.gb.set_object(obj, obj.get_x(), obj.get_y())
 
