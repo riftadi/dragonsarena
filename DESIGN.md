@@ -183,6 +183,10 @@ This class stores the 25x25 game board grids state. The characters' objects are 
 
 This class stores gameboard and also the characters involved in a game. The GameState should always know how many players are still alive. If needed, this class can also contain the offline players list data.
 
+### settings
+
+This file contains all global constants and configurations. All hardcoded values should go here for easy maintainability.
+
 ### JSONEncoder
 
 This class functions to serialize and deserialize GameState object to JSON format.
@@ -231,7 +235,11 @@ This class creates a ZeroMQ REP and waits for action commands from the clients. 
 
 #### ServerCommandDuplicator
 
-This class is responsible to duplicate commands received from the clients to peer servers and execute commands received from the peer servers in the TSSModel. (Adi's note: should it be the class that do TSS trailing execution as well? or just create another one?)
+This class is responsible to duplicate commands received from the clients to peer servers and execute commands received from the peer servers in the TSSModel.
+
+#### TSSManager
+
+This class is responsible for TSS state checking and rollback management. Currently, there is only one trailing state implemented. It also checks for stale players and respond accordingly.
 
 ## client
 

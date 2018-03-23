@@ -2,12 +2,12 @@ import zmq
 import json
 import time
 import uuid
-from random import randint
 from threading import Thread
 
 from server.TSSModel import TSSModel
 from common.JSONEncoder import GameStateEncoder
 from common.SocketWrapper import SocketWrapper
+from common.settings import *
 
 class ClientCommandManager(Thread):
     """
@@ -35,7 +35,7 @@ class ClientCommandManager(Thread):
             # WARNING: the default recv() function is BLOCKING, use with caution!
             # here we use a wrapped non-blocking version
             try:
-                json_message = self.socket_non_blocking.recv(timeout=10000)
+                json_message = self.socket_non_blocking.recv(timeout=5000)
             except:
                 continue
 
@@ -43,6 +43,8 @@ class ClientCommandManager(Thread):
             self.socket.send(b"{'status' : 'ok'}")
 
             parsed_message = json.loads(json_message)
+            # update client last seen time
+            self.tss_model.update_client_last_seen_time(parsed_message["player_id"])
 
             # an event from client arrived, increase our lamport clock
             self.tss_model.increase_event_clock()
@@ -56,7 +58,7 @@ class ClientCommandManager(Thread):
 
             # if a character spawns, randomize spawning location, hp, and ap
             if parsed_message["type"] == "spawn":
-                parsed_message = self.process_spawn_msg(parsed_message)
+                parsed_message = self.server_command_duplicator.process_spawn_msg(parsed_message)
                 parsed_message["type"] = "proposal"
                 player_id = parsed_message["player_id"]
                 self.tss_model.lock_cell(parsed_message)
@@ -66,32 +68,10 @@ class ClientCommandManager(Thread):
                 # save the command for state duplication purposes
                 self.message_box.put_message(parsed_message)
 
-                # execute the command right away in the leading state (state_id 0)
-                self.tss_model.process_action(parsed_message, state_id=0)
+                # execute the command right away in the leading state
+                self.tss_model.process_action(parsed_message, state_id=LEADING_STATE)
                 
                 # duplicate command to peers
                 self.server_command_duplicator.publish_msg_to_peers(parsed_message)
 
         self.socket.close()
-
-    def process_spawn_msg(self, parsed_message):
-        # generate randomized x, y, hp and ap for characters in the message
-
-        if parsed_message["player_type"] == "human":
-            parsed_message["hp"] = randint(11,20)
-            parsed_message["ap"] = randint(1,10)
-        elif parsed_message["player_type"] == "dragon":
-            parsed_message["hp"] = randint(50,100)
-            parsed_message["ap"] = randint(5,20)
-
-        safely_placed = False
-        while not safely_placed:
-            prop_x = randint(0, 24)
-            prop_y = randint(0, 24)
-
-            if self.tss_model.get_object(prop_x, prop_y) == None:
-                safely_placed = True
-                parsed_message["x"] = prop_x
-                parsed_message["y"] = prop_y
-
-        return parsed_message

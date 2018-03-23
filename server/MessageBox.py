@@ -44,7 +44,7 @@ class MessageBox(object):
                 result_list.append(msg)
                 msg["trailing1_checked"] = True
 
-        return sorted(result_list, key=itemgetter("timestamp", "msg_id"))
+        return sorted(result_list, key=itemgetter("timestamp", "eventstamp"))
 
     def put_message(self, input_dict):
         self.msg_counter += 1
