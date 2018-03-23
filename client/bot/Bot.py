@@ -48,7 +48,7 @@ class Bot(Thread):
             
             time.sleep(self.random_delay/1000.0)
 
-        print "Player %s is dead, exiting bot.." % self.obj_id
+        if self.verbose: print "Player %s is dead, exiting bot.." % self.obj_id
 
     def change_workers(self, msg_sender, gamestate_updater):
         self.msg_sender = msg_sender
