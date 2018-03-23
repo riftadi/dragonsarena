@@ -9,6 +9,9 @@ N_SERVERS = 2
 # Which servers (in server_ID) should the client connect to?
 CLIENTSIDE_SERVER_LIST = [1, 2]
 
+# Duration of gta game in seconds
+GTA_DURATION = 2 * 60
+
 # The addresses of the servers
 SERVERS_LOCAL = [
             { # server 1
