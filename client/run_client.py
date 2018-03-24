@@ -3,6 +3,7 @@ import sys
 import time
 import uuid
 from random import randint
+import zmq
 
 from client.Client import Client
 from common.settings import *
@@ -22,11 +23,12 @@ if __name__ == '__main__':
     # by default the type is human, unless specified otherwise
     player_type = "human"
     player_id = uuid.uuid4().hex
+    zmq_root_context = zmq.Context()
 
     if len(sys.argv) == 2:
         player_type = sys.argv[1]
 
-    servers_list = SERVERS_LOCAL
+    servers_list = SERVERS_AWS_PUBLIC
 
     rand_idx = randint(0, len(CLIENTSIDE_SERVER_LIST)-1)
     server_id = CLIENTSIDE_SERVER_LIST[rand_idx]
@@ -38,7 +40,7 @@ if __name__ == '__main__':
 
     # start our client
     c = Client(publisher_url=server["server2client"], command_url=server["client2server"],
-                player_type=player_type, player_id=player_id, verbose=VERBOSE)
+                player_type=player_type, player_id=player_id, zmq_context=zmq_root_context, verbose=VERBOSE)
 
     # wait a bit and let the gamestate comes in
     # c.wait_for_initial_gamestate()
@@ -67,4 +69,5 @@ if __name__ == '__main__':
 
     c.stop_gamestate_updater()
     c.terminate()
+    zmq_root_context.term()
     print "Exiting client for %s with %s.." % (player_type, player_id)

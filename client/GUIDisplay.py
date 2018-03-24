@@ -29,7 +29,7 @@ class GUIDisplay(object):
         self.zmq_root_context = zmq.Context()
         self.display_delay = display_delay
         self.with_background = with_background
-        self.gsu = GameStateUpdater(self.zmq_root_context, publisher_url=publisher_url)
+        self.gsu = GameStateUpdater(zmq_context=self.zmq_root_context, publisher_url=publisher_url)
         self.quit_flag = False
 
         self.gsu.start()

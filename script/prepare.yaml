@@ -1,0 +1,51 @@
+---
+- hosts: aws
+
+  # pre_tasks:
+  #   - name: Refresh apt cache
+  #     become: no
+  #     local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get update
+
+  #   - name: Install Python-apt to pull in Python
+  #     become: no
+  #     local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get install --no-install-recommends --assume-yes python-apt
+
+  tasks:
+  - name: Install required packages
+    action: >
+      {{ ansible_pkg_mgr }} name={{ item }} state=present update_cache=yes
+    with_items:
+      - python-pip
+      - python-zmq
+      - python-pygame
+      - chrony
+
+  - name: Set timezone
+    shell: timedatectl set-timezone Europe/Amsterdam
+    become: true
+
+  - name: Copy over the chrony configuration
+    template: src=./chrony.conf dest=/etc/chrony/chrony.conf
+    notify:
+    - restart chrony
+ 
+  - name: Make sure chrony is stopped
+    service: name=chrony state=stopped enabled=yes
+    become: true
+ 
+  - name: Sync time initialy
+    shell: chronyd -q
+    become: true
+
+  - name: Make sure chrony is started up
+    service: name=chrony state=started enabled=yes
+    become: true
+
+  - name: Sync hwclock
+    shell: hwclock -w
+    become: true
+
+  handlers:
+  - name: Restart chrony
+    service: name=chrony state=restarted
+    become: true

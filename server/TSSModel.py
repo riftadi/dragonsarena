@@ -21,6 +21,7 @@ class TSSModel(object):
         self.trailingstate01 = GameState(self.width, self.height, self.verbose)
         # only used during rollback period
         self.tempstate = None
+        self.is_in_rollback = False
 
         # THE ABSOLUTE SOURCE OF TRUTH OF GAME RUNNING STATE
         # It should be True if running, False if not running
@@ -72,13 +73,15 @@ class TSSModel(object):
         # get info on offline character, return None if it does not exist
         return self.leadingstate.get_offline_player_state_by_id(obj_id)
 
-    def prepare_rollback(self, command_list):
-        self.tempstate = copy.deepcopy(self.trailingstate01)
-        self.process_action_list(command_list, state_id=TEMP_STATE)
-
     def rollback_state(self, command_list):
+        self.is_in_rollback = True
+        # print "leading_before: %s" % str(self.leadingstate)
+        self.tempstate = copy.deepcopy(self.trailingstate01)
+        # print "trailing01_before: %s" % str(self.tempstate)
         self.process_action_list(command_list, state_id=TEMP_STATE)
         self.leadingstate = self.tempstate
+        # print "leading_after: %s" % str(self.leadingstate)
+        self.is_in_rollback = False
 
     def get_event_clock(self):
         return self.event_clock
@@ -137,6 +140,11 @@ class TSSModel(object):
         self.game_running_flag = False
 
     def check_game_end_condition(self):
+        if self.is_in_rollback:
+            # we're in rollback, don't end game
+            self.game_running_flag = True
+            return None
+
         state = True
 
         if self.players_and_dragons_have_spawned_flag:
@@ -150,6 +158,9 @@ class TSSModel(object):
                 state = False
 
         self.game_running_flag = state
+
+    def get_rollback_status(self):
+        return self.is_in_rollback
 
     def get_list_of(self, c):
         return self.leadingstate.get_list_of(c)

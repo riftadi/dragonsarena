@@ -1,7 +1,10 @@
 #!/usr/bin/python
+import sys
 import time
 from client.ClientThread import ClientThread as Client
 from common.settings import *
+
+import zmq
 
 gametrace = "game_trace.csv"
 clients = {}
@@ -18,27 +21,41 @@ with open(gametrace) as f:
 })
 
 total = len(trace)
-current = 1
-last = 0
-for command in trace:
-    print "COMMAND %d from %d" % (current, total)
-    current = current + 1
+next_time = 0.0
 
-    execution = (GTA_DURATION * command["time"])
+# running clients
+for idx in xrange(total):
+    command = trace[idx]
+
     uid = command["pid"]
     action = command["action"]
 
-    time.sleep(execution - last)
-    last = execution
+    print "COMMAND %d from %d: p%s %s" % (idx+1, total, uid, action[7:].lower())
+
     if action == "PLAYER_LOGIN":
-        c = Client(uid)
+        context = zmq.Context()
+        c = Client(uid, context)
         c.start()
-        clients[uid] = c
+        clients[uid] = (c, context)
     elif action == "PLAYER_LOGOUT":
         if clients.has_key(uid):
-            c = clients.get(uid)
+            (c, context) = clients.get(uid)
             c.set_offline()
             # JOINING TAKES A LONG TIME WHEN SKIPPING WE HAVE A LOT OF DEAD THREADS BUT GAIN PERFORMANCE
-            #c.join()
+            # c.join()
+            context.term()
+            clients.pop(uid, None)
+
+    if idx < (total-1):
+        sleep_delay = float(GTA_DURATION * (float(trace[idx+1]["time"]-float(trace[idx]["time"]))))
+        time.sleep(sleep_delay)    
+
+print "wait for clients to finish.."
+
+for uid in clients:
+    (c, context) = clients.get(uid)
+    c.join()
+    context.term()
 
 print "DONE"
+
