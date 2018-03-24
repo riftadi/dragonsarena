@@ -38,17 +38,19 @@ class MessageBox(object):
 
         return sorted(result, key=itemgetter("timestamp", "eventstamp"))
 
-    def get_all_unchecked_messages_for_rollback(self):
+    def get_all_unchecked_messages_for_rollback_from_timestamp(self, time_from):
         # result_list = []
 
         # for msg in self.message_box:
         #     if not msg["trailing1_checked"]:
         #         result_list.append(msg)
         #         msg["trailing1_checked"] = True
+        result = []
+        for cmd in self.pending_commands:
+            if cmd["timestamp"] >= time_from:
+                result.append(cmd)
 
-        result = sorted(self.pending_commands, key=itemgetter("timestamp", "eventstamp"))
-
-        return result
+        return sorted(result, key=itemgetter("timestamp", "eventstamp"))
 
     def delete_trailingstate1_checked_messages(self):
         # result_list = []

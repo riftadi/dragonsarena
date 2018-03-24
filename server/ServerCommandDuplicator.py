@@ -69,13 +69,8 @@ class ServerCommandDuplicator(Thread):
 
                         self.tss_model.update_client_last_seen_time(parsed_message["player_id"])
 
-                        # save the command for state duplication purposes
-                        self.message_box.put_message(parsed_message)
-
-                        # execute the command if the timestamp of the message is newer than last message
-                        if parsed_message["timestamp"] >= self.last_msg_timestamp-MSG_LATE_DELAY_BUDGET:
-                            self.tss_model.process_action(parsed_message, state_id=LEADING_STATE)
-                            self.last_msg_timestamp = parsed_message["timestamp"]
+                        # process the message
+                        self.process_message(parsed_message)
 
                     elif message.startswith("alive|") == True:
                         self.heartbeat[subscription.LAST_ENDPOINT[6:]] = time.time()
@@ -138,12 +133,8 @@ class ServerCommandDuplicator(Thread):
                                 proposal_msg["msg_id"] = uuid.uuid1(self.server_id).hex
                                 proposal_msg["type"] = "spawn"
 
-                                # save the command for state duplication purposes
-                                self.message_box.put_message(proposal_msg)
-
-                                # execute the command right away
-                                self.tss_model.process_action(proposal_msg, state_id=LEADING_STATE)
-
+                                # process the message
+                                self.process_message(proposal_msg)
                     # other topic goes here
             
             now = int(round(time.time() * 1000))
@@ -205,8 +196,10 @@ class ServerCommandDuplicator(Thread):
             # add local clock to our message
             proposal_msg["timestamp"] = int(round(time.time() * 1000))
             proposal_msg["type"] = "spawn"
-            # execute in proposing server
-            self.tss_model.process_action(proposal_msg, state_id=LEADING_STATE)
+
+            # process the message
+            self.process_message(proposal_msg)
+
             del self.votes[player_id]
             self.publish_spawn({
                 "type": "commit",
@@ -216,6 +209,15 @@ class ServerCommandDuplicator(Thread):
                 "eventstamp": proposal_msg["eventstamp"]
             })
         self.lock.release()
+
+    def process_message(self, action_msg):
+        # save the command for state duplication purposes
+        self.message_box.put_message(action_msg)
+
+        # execute the command if the timestamp of the message is newer than last message
+        if action_msg["timestamp"] >= self.last_msg_timestamp-MSG_LATE_DELAY_BUDGET:
+            self.tss_model.process_action(action_msg, state_id=LEADING_STATE)
+            self.last_msg_timestamp = action_msg["timestamp"]
 
     def add_vote(self, player_id, connection):
         self.lock.acquire()

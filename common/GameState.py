@@ -126,6 +126,9 @@ class GameState(object):
         """
         return msg_id in self.executed_msg_ids
 
+    def get_executed_msg_ids(self):
+        return self.executed_msg_ids
+
     def get_object(self, x, y):
         return self.gb.get_object(x, y)
 

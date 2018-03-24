@@ -21,7 +21,7 @@ class TSSManager(Thread):
         self.absolute_game_start_time = absolute_game_start_time
         self.server_id = server_id
 
-        self.trailing1_delay = 400
+        self.trailing1_delay = TRAILING_01_DELAY
         self.start_checking_flag = False
         self.stale_counter = 0
 
@@ -61,12 +61,16 @@ class TSSManager(Thread):
                 print "inconsistency detected!! duplicating trailing state.."
 
                 # repair our leadingstate
-                # rollback to previous state and reexecutes commands
-                full_action_list = self.message_box.get_all_unchecked_messages_for_rollback()
+                # rollback to trailing01 state and re-executes commands until current time
+                full_action_list = self.message_box.get_all_unchecked_messages_for_rollback_from_timestamp(self.trailing1_execution_time)
+
+                # for debugging purpose
+                # print "tss1_actions: %s" % str(tss1_action_list)
+                # print "applying_to_leading: %s" % str(full_action_list)
+
                 self.tss_model.rollback_state(command_list=full_action_list)
 
         if state_id == TRAILING_01_STATE:
-
             if (len(tss1_action_list) > 0):
                 # execute the action list in the state, if there are some
                 self.tss_model.process_action_list(tss1_action_list, state_id=state_id)
@@ -78,17 +82,42 @@ class TSSManager(Thread):
 
     def check_consistency(self, action_list):
         consistent_flag = True
-        leadingstate = self.tss_model.get_leadingstate()
+        leading_executed_msg_ids = self.tss_model.get_leadingstate().get_executed_msg_ids()
 
-        msg_id_list = []
+        trailing_msg_ids = []
         for action in action_list:
-            msg_id_list.append(action["msg_id"])
+            trailing_msg_ids.append(action["msg_id"])
 
-        for msg_id in msg_id_list:
-            if not leadingstate.is_action_id_exist(msg_id):
-                # msg_id does not exist, there is inconsistency!
+        # for debugging purpose
+        # print "t:%s" % str(trailing_msg_ids)
+        # print "l:%s" % str(leading_executed_msg_ids)
+
+        if len(trailing_msg_ids) > 0:
+            # find the offset
+            offset = 0
+            offset_max = len(leading_executed_msg_ids)
+
+            try:
+                while offset < offset_max:
+                    if leading_executed_msg_ids[offset] != trailing_msg_ids[0]:
+                        offset += 1
+                    else:
+                        break
+
+                if offset == offset_max:
+                    consistent_flag = False
+                else:
+                    for i in xrange(len(trailing_msg_ids)):
+                        if RELAX_TSS_ORDER_CHECKING:
+                            if not trailing_msg_ids[i] in leading_executed_msg_ids:
+                                consistent_flag = False
+                                break
+                        else:
+                            if leading_executed_msg_ids[offset+i] != trailing_msg_ids[i]:
+                                consistent_flag = False
+                                break
+            except:
                 consistent_flag = False
-                break
 
         return consistent_flag
 
