@@ -7,8 +7,7 @@ from common.settings import *
 class GameClockManager(Thread):
     """
         This class is responsible to advance the game timer,
-        do winning condition checking in the main TSSModel,
-        and clearing message box(es) every 500 ms.
+        do winning condition checking in the main TSSModel.
     """
     def __init__(self, tss_model, message_box, update_delay=GAMECLOCK_UPDATE_DELAY):
         Thread.__init__(self)
@@ -26,9 +25,5 @@ class GameClockManager(Thread):
             # every 300 ms check winning condition
             if (current_time % GAME_WINNING_CONDITION_CHECK_DELAY == 0):
                 self.tss_model.check_game_end_condition()
-
-            # clear message_box and stale players every 2000 ms
-            if (current_time % CLEAR_MESSAGE_BOX_DELAY == 0):
-                self.message_box.delete_checked_messages()
 
             time.sleep(self.update_delay/1000.0)

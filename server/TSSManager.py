@@ -35,16 +35,62 @@ class TSSManager(Thread):
             now = int(round(time.time() * 1000))
             if not self.start_checking_flag:
                 if now >= self.absolute_game_start_time + self.trailing1_delay:
-                    # it is our time to start checking
+                    # it is trailing state 1's time to start checking
                     self.start_checking_flag = True
             else:
-                self.execute_state(state_id=1, curr_time=now)
+                self.execute_state(state_id=TRAILING_01_STATE, curr_time=now)
 
             if self.stale_counter % 5 == 4:
                 self.manage_stale_players()
             self.stale_counter += 1
             
             time.sleep(float(self.trailing1_delay)/1000.0)
+
+    def execute_state(self, state_id, curr_time):
+        action_list = []
+
+        if state_id == TRAILING_01_STATE:
+            # check for inconsistency in trailing state
+            tss1_action_list = self.message_box.get_unchecked_messages_within_timestamp(self.trailing1_execution_time, curr_time)
+
+            # check if all action in action list is in state
+            is_consistent = self.check_consistency(tss1_action_list)
+
+            if not is_consistent:
+                # there is inconsistency detected
+                print "inconsistency detected!! duplicating trailing state.."
+
+                # repair our leadingstate
+                # rollback to previous state and reexecutes commands
+                full_action_list = self.message_box.get_all_unchecked_messages_for_rollback()
+                self.tss_model.rollback_state(command_list=full_action_list)
+
+        if state_id == TRAILING_01_STATE:
+
+            if (len(tss1_action_list) > 0):
+                # execute the action list in the state, if there are some
+                self.tss_model.process_action_list(tss1_action_list, state_id=state_id)
+                # delete checked messages for TSS1
+                self.message_box.delete_trailingstate1_checked_messages()
+
+            # update trailing state 1 execution time
+            self.trailing1_execution_time = curr_time
+
+    def check_consistency(self, action_list):
+        consistent_flag = True
+        leadingstate = self.tss_model.get_leadingstate()
+
+        msg_id_list = []
+        for action in action_list:
+            msg_id_list.append(action["msg_id"])
+
+        for msg_id in msg_id_list:
+            if not leadingstate.is_action_id_exist(msg_id):
+                # msg_id does not exist, there is inconsistency!
+                consistent_flag = False
+                break
+
+        return consistent_flag
 
     def manage_stale_players(self):
         unactive_player_ids = self.tss_model.get_unactive_player_ids()
@@ -75,50 +121,3 @@ class TSSManager(Thread):
                 
                 # duplicate command to peers
                 self.server_command_duplicator.publish_msg_to_peers(msg)
-
-    def execute_state(self, state_id, curr_time):
-        action_list = []
-
-        if state_id == 1:
-            # check for inconsistency in trailing state
-            action_list = self.message_box.get_unchecked_messages()
-
-            # check if all action in action list is in state
-            is_consistent = self.check_consistency(action_list)
-
-            if not is_consistent:
-                # there is inconsistency detected
-                print "inconsistency detected!! duplicating trailing state.."
-
-                # repair our leadingstate
-                # rollback to previous state and reexecutes commands
-                command_list = self.message_box.get_messages_within_timestamp(self.trailing1_execution_time, curr_time)
-                self.tss_model.prepare_rollback(command_list=command_list)
-                last_time = curr_time
-                now = int(round(time.time() * 1000)) + 10000
-                command_list = self.message_box.get_messages_within_timestamp(last_time, now)
-                self.tss_model.rollback_state(command_list=command_list)
-
-        if (len(action_list) > 0):
-            # execute the action list in the state
-            self.tss_model.process_action_list(action_list, state_id=state_id)
-
-        if state_id == 1:
-            # update trailing state 1 execution time
-            self.trailing1_execution_time = curr_time
-
-    def check_consistency(self, action_list):
-        consistent_flag = True
-        leadingstate = self.tss_model.get_leadingstate()
-
-        msg_id_list = []
-        for action in action_list:
-            msg_id_list.append(action["msg_id"])
-
-        for msg_id in msg_id_list:
-            if not leadingstate.is_action_id_exist(msg_id):
-                # msg_id does not exist, there is inconsistency!
-                consistent_flag = False
-                break
-
-        return consistent_flag

@@ -72,11 +72,8 @@ class TSSModel(object):
         # get info on offline character, return None if it does not exist
         return self.leadingstate.get_offline_player_state_by_id(obj_id)
 
-    def prepare_rollback(self, command_list):
-        self.tempstate = copy.deepcopy(self.trailingstate01)
-        self.process_action_list(command_list, state_id=TEMP_STATE)
-
     def rollback_state(self, command_list):
+        self.tempstate = copy.deepcopy(self.trailingstate01)
         self.process_action_list(command_list, state_id=TEMP_STATE)
         self.leadingstate = self.tempstate
 

@@ -15,6 +15,7 @@ class GameState(object):
         self.human_list = []
         self.dragon_list = []
 
+        # used for TSS state checking
         self.executed_msg_ids = []
         self.offline_player_states = []
 

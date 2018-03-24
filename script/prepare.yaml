@@ -1,0 +1,20 @@
+---
+- hosts: aws
+
+  pre_tasks:
+    - name: Refresh apt cache
+      become: no
+      local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get update
+
+    - name: Install Python-apt to pull in Python
+      become: no
+      local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get install --no-install-recommends --assume-yes python-apt
+
+  tasks:
+  - name: Install required packages
+    action: >
+      {{ ansible_pkg_mgr }} name={{ item }} state=present update_cache=yes
+    with_items:
+      - python-pip
+      - python-zmq
+      - python-pygame
