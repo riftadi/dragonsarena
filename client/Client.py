@@ -7,21 +7,15 @@ from client.GameStateUpdater import GameStateUpdater
 from common.settings import *
 
 class Client(object):
-    def __init__(self, publisher_url, command_url, player_type, player_id, zmq_context=None, verbose=True):
+    def __init__(self, publisher_url, command_url, player_type, player_id, zmq_context, verbose=True):
         self.publisher_url = publisher_url
         self.command_url = command_url
 
-        self.zmq_context_initated_flag = True
-        if zmq_context == None:
-            self.zmq_root_context = zmq.Context()
-        else:
-            self.zmq_root_context = zmq_context
-            self.zmq_context_initated_flag = False
+        self.zmq_root_context = zmq_context
 
-        self.gsu = GameStateUpdater(self.zmq_root_context, publisher_url=self.publisher_url)
+        self.gsu = GameStateUpdater(zmq_context=self.zmq_root_context, publisher_url=self.publisher_url)
         self.gsu.start()
-
-        self.msg_sender = ClientSideCommandSender(self.zmq_root_context, command_url=self.command_url)
+        self.msg_sender = ClientSideCommandSender(zmq_context=self.zmq_root_context, command_url=self.command_url)
 
         # spawn our character
         self.player_id = player_id
@@ -87,6 +81,3 @@ class Client(object):
         self.msg_sender.terminate()
         self.bot.join()
         self.gsu.join()
-
-        if self.zmq_context_initated_flag:
-            self.zmq_root_context.term()
