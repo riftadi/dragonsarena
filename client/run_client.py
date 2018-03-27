@@ -31,6 +31,11 @@ if __name__ == '__main__':
     servers_list = SERVERS_AWS_PUBLIC
 
     rand_idx = randint(0, len(CLIENTSIDE_SERVER_LIST)-1)
+
+    if len(sys.argv) == 4:
+        player_type = sys.argv[1]
+        player_id = sys.argv[2]
+        rand_idx = int(sys.argv[3])
     server_id = CLIENTSIDE_SERVER_LIST[rand_idx]
 
     # find out our server info
