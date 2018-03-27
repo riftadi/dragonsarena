@@ -59,6 +59,7 @@ class Server(object):
             try:
                 time.sleep(SERVER_MAIN_LOOP_DELAY/1000.0)
             except KeyboardInterrupt:
+                self.T.stop_game()
                 break
 
         print "Ending games.."
@@ -66,7 +67,6 @@ class Server(object):
         # that the game is already finished
         time.sleep(WAIT_DELAY_AFTER_GAME_END/1000)
         self.publisher_worker.stop_publishing()
-
         # game is finished, cleaning up worker threads
         self.tss_worker.join()
         self.client_command_worker.join()

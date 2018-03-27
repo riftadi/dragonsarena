@@ -22,6 +22,7 @@ with open(gametrace) as f:
 
 total = len(trace)
 next_time = 0.0
+context = zmq.Context()
 
 # running clients
 for idx in xrange(total):
@@ -33,17 +34,15 @@ for idx in xrange(total):
     print "COMMAND %d from %d: p%s %s" % (idx+1, total, uid, action[7:].lower())
 
     if action == "PLAYER_LOGIN":
-        context = zmq.Context()
         c = Client(uid, context)
         c.start()
-        clients[uid] = (c, context)
+        clients[uid] = c
     elif action == "PLAYER_LOGOUT":
         if clients.has_key(uid):
-            (c, context) = clients.get(uid)
+            c = clients.get(uid)
             c.set_offline()
             # JOINING TAKES A LONG TIME WHEN SKIPPING WE HAVE A LOT OF DEAD THREADS BUT GAIN PERFORMANCE
             # c.join()
-            context.term()
             clients.pop(uid, None)
 
     if idx < (total-1):
@@ -53,9 +52,10 @@ for idx in xrange(total):
 print "wait for clients to finish.."
 
 for uid in clients:
-    (c, context) = clients.get(uid)
+    c = clients.get(uid)
     c.join()
-    context.term()
+
+context.term()
 
 print "DONE"
 

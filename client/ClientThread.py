@@ -10,7 +10,10 @@ class ClientThread(threading.Thread):
         self.rand_idx = randint(0, len(CLIENTSIDE_SERVER_LIST)-1)
         self.server_id = CLIENTSIDE_SERVER_LIST[self.rand_idx]
         self.id = uid
-        self.servers = SERVERS_AWS_PUBLIC
+        if AWS_MODE_FLAG:
+            self.servers = SERVERS_AWS_PUBLIC
+        else:
+            self.servers = SERVERS_LOCAL
         self.online = True
         self.server = self.get_server_info(self.server_id, self.servers)
         self.zmq_context = zmq_context
