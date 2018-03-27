@@ -1,13 +1,13 @@
 # This file holds all settings in the game
 
 # Are we running on AWS?
-AWS_MODE_FLAG = False
+AWS_MODE_FLAG = True
 
 # How many servers should be running
-N_SERVERS = 2
+N_SERVERS = 5
 
 # Which servers (in server_ID) should the client connect to?
-CLIENTSIDE_SERVER_LIST = [1, 2]
+CLIENTSIDE_SERVER_LIST = [1, 2, 3, 4, 5]
 
 # Duration of gta game in seconds
 GTA_DURATION = 2 * 60
@@ -52,7 +52,7 @@ SERVERS_LOCAL = [
             },
           ]
 
-PRIVATE_AWS_IP = ["172.16.17.1", "172.16.17.1", "172.16.17.1", "172.16.17.1", "172.16.17.1"]
+PRIVATE_AWS_IP = ["172.31.30.171", "172.31.31.160", "172.31.21.239", "172.31.16.249", "172.31.24.201"]
 
 SERVERS_AWS_PRIVATE = [
             { # server 1
@@ -91,7 +91,8 @@ SERVERS_AWS_PRIVATE = [
             },
           ]
 
-PUBLIC_AWS_IP = ["52.50.157.142", "54.154.152.152", "52.50.157.142", "54.154.152.152", "52.50.157.142"]
+
+PUBLIC_AWS_IP = ["34.244.190.223", "52.209.25.212", "52.213.164.67", "54.76.128.126", "176.34.135.30"]
 
 SERVERS_AWS_PUBLIC = [
             { # server 1

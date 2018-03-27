@@ -1,20 +1,16 @@
 ---
 - hosts: aws
 
-  # pre_tasks:
-  #   - name: Refresh apt cache
-  #     become: no
-  #     local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get update
-
-  #   - name: Install Python-apt to pull in Python
-  #     become: no
-  #     local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get install --no-install-recommends --assume-yes python-apt
+# for first time install python use this command:
+# ansible aws -i script/hosts --sudo -m raw -a "apt-get install -y python python-simplejson"
 
   tasks:
   - name: Install required packages
     action: >
       {{ ansible_pkg_mgr }} name={{ item }} state=present update_cache=yes
+    become: true
     with_items:
+      - python
       - python-pip
       - python-zmq
       - python-pygame
@@ -26,8 +22,9 @@
 
   - name: Copy over the chrony configuration
     template: src=./chrony.conf dest=/etc/chrony/chrony.conf
+    become: true
     notify:
-    - restart chrony
+    - Restart chrony
  
   - name: Make sure chrony is stopped
     service: name=chrony state=stopped enabled=yes
@@ -44,6 +41,11 @@
   - name: Sync hwclock
     shell: hwclock -w
     become: true
+
+  - name: Get dragonsarena from Github
+    git:
+      repo: 'https://github.com/riftadi/dragonsarena.git'
+      dest: /home/ubuntu/dragonsarena
 
   handlers:
   - name: Restart chrony
