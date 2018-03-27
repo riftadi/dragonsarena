@@ -1,0 +1,30 @@
+---
+- hosts: server1
+
+  tasks:
+  - name: Start dragons arena server 1
+    shell: cd /home/ubuntu/dragonsarena; nohup python -m server.run_server 1 </dev/null >/dev/null 2>&1 &
+
+- hosts: server2
+
+  tasks:
+  - name: Start dragons arena server 2
+    shell: cd /home/ubuntu/dragonsarena; nohup python -m server.run_server 2 </dev/null >/dev/null 2>&1 &
+
+- hosts: server3
+
+  tasks:
+  - name: Start dragons arena server 3
+    shell: cd /home/ubuntu/dragonsarena; nohup python -m server.run_server 3 </dev/null >/dev/null 2>&1 &
+
+- hosts: server4
+
+  tasks:
+  - name: Start dragons arena server 4
+    shell: cd /home/ubuntu/dragonsarena; nohup python -m server.run_server 4 </dev/null >/dev/null 2>&1 &
+
+- hosts: server5
+
+  tasks:
+  - name: Start dragons arena server 5
+    shell: cd /home/ubuntu/dragonsarena; nohup python -m server.run_server 5 </dev/null >/dev/null 2>&1 &

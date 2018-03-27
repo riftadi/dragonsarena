@@ -1,0 +1,6 @@
+---
+- hosts: aws
+
+  tasks:
+  - name: Update dragonsarena setting
+    template: src=../common/settings.py dest=/home/ubuntu/dragonsarena/common/settings.py

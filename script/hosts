@@ -1,6 +1,24 @@
-[aws]
-52.50.157.142
-54.154.152.152
+[server1]
+34.244.190.223
+
+[server2]
+52.209.25.212
+
+[server3]
+52.213.164.67
+
+[server4]
+54.76.128.126
+
+[server5]
+176.34.135.30
+
+[aws:children]
+server1
+server2
+server3
+server4
+server5
 
 [aws:vars]
 ansible_user = ubuntu

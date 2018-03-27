@@ -1,0 +1,6 @@
+---
+- hosts: aws
+
+  tasks:
+  - name: Stop dragons arena servers
+    shell: nohup /home/ubuntu/dragonsarena/unbattle.sh </dev/null >/dev/null 2>&1 &
