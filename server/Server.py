@@ -56,7 +56,10 @@ class Server(object):
     def mainloop(self):
         while self.T.is_game_running():
             # just sleep for SERVER_MAIN_LOOP_DELAY while checking if the game is still running
-            time.sleep(SERVER_MAIN_LOOP_DELAY/1000.0)
+            try:
+                time.sleep(SERVER_MAIN_LOOP_DELAY/1000.0)
+            except KeyboardInterrupt:
+                break
 
         print "Ending games.."
         # give a few seconds delay to give opportunity for publisher_worker to broadcast
