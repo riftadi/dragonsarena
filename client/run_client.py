@@ -28,7 +28,10 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         player_type = sys.argv[1]
 
-    servers_list = SERVERS_AWS_PUBLIC
+    if AWS_MODE_FLAG:
+        servers_list = SERVERS_AWS_PUBLIC
+    else:
+        servers_list = SERVERS_LOCAL
 
     rand_idx = randint(0, len(CLIENTSIDE_SERVER_LIST)-1)
     server_id = CLIENTSIDE_SERVER_LIST[rand_idx]

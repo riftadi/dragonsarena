@@ -10,117 +10,123 @@ N_SERVERS = 2
 CLIENTSIDE_SERVER_LIST = [1, 2]
 
 # Duration of gta game in seconds
-GTA_DURATION = 1 * 60
+GTA_DURATION = 2 * 60
+
+LOCAL_IP = ["127.0.0.1", "127.0.0.1", "127.0.0.1", "127.0.0.1", "127.0.0.1"]
 
 # The addresses of the servers
 SERVERS_LOCAL = [
             { # server 1
                 "server_id"     :  1,
-                "server2client" :  "127.0.0.1:8181",
-                "client2server" :  "127.0.0.1:8282",
-                "server2server" :  "127.0.0.1:8383",
+                "server2client" :  "%s:8181" % LOCAL_IP[0],
+                "client2server" :  "%s:8282" % LOCAL_IP[0],
+                "server2server" :  "%s:8383" % LOCAL_IP[0],
             },
 
             { # server 2
                 "server_id"     :  2,
-                "server2client" :  "127.0.0.1:9191",
-                "client2server" :  "127.0.0.1:9292",
-                "server2server" :  "127.0.0.1:9393",
+                "server2client" :  "%s:9191" % LOCAL_IP[1],
+                "client2server" :  "%s:9292" % LOCAL_IP[1],
+                "server2server" :  "%s:9393" % LOCAL_IP[1],
             },
             
             { # server 3
                 "server_id"     :  3,
-                "server2client" :  "127.0.0.1:7191",
-                "client2server" :  "127.0.0.1:7292",
-                "server2server" :  "127.0.0.1:7393",
+                "server2client" :  "%s:10101" % LOCAL_IP[2],
+                "client2server" :  "%s:10202" % LOCAL_IP[2],
+                "server2server" :  "%s:10303" % LOCAL_IP[2],
             },
             
             { # server 4
                 "server_id"     :  4,
-                "client2server" :  "127.0.0.1:10101",
-                "server2client" :  "127.0.0.1:10202",
-                "server2server" :  "127.0.0.1:10303",
+                "server2client" :  "%s:11111" % LOCAL_IP[3],
+                "client2server" :  "%s:11212" % LOCAL_IP[3],
+                "server2server" :  "%s:11313" % LOCAL_IP[3],
             },
             
             { # server 5
                 "server_id"     :  5,
-                "client2server" :  "127.0.0.1:11101",
-                "server2client" :  "127.0.0.1:11202",
-                "server2server" :  "127.0.0.1:11303",
+                "server2client" :  "%s:12121" % LOCAL_IP[4],
+                "client2server" :  "%s:12222" % LOCAL_IP[4],
+                "server2server" :  "%s:12323" % LOCAL_IP[4],
             },
           ]
+
+PRIVATE_AWS_IP = ["172.16.17.1", "172.16.17.1", "172.16.17.1", "172.16.17.1", "172.16.17.1"]
 
 SERVERS_AWS_PRIVATE = [
             { # server 1
                 "server_id"     :  1,
-                "server2client" :  "172.16.17.1:8181",
-                "client2server" :  "172.16.17.1:8282",
-                "server2server" :  "172.16.17.1:8383",
+                "server2client" :  "%s:8181" % PRIVATE_AWS_IP[0],
+                "client2server" :  "%s:8282" % PRIVATE_AWS_IP[0],
+                "server2server" :  "%s:8383" % PRIVATE_AWS_IP[0],
             },
 
             { # server 2
                 "server_id"     :  2,
-                "server2client" :  "172.16.17.2:9191",
-                "client2server" :  "172.16.17.2:9292",
-                "server2server" :  "172.16.17.2:9393",
+                "server2client" :  "%s:8181" % PRIVATE_AWS_IP[1],
+                "client2server" :  "%s:8282" % PRIVATE_AWS_IP[1],
+                "server2server" :  "%s:8383" % PRIVATE_AWS_IP[1],
             },
             
             { # server 3
                 "server_id"     :  3,
-                "server2client" :  "172.16.17.3:7191",
-                "client2server" :  "172.16.17.3:7292",
-                "server2server" :  "172.16.17.3:7393",
+                "server2client" :  "%s:8181" % PRIVATE_AWS_IP[2],
+                "client2server" :  "%s:8282" % PRIVATE_AWS_IP[2],
+                "server2server" :  "%s:8383" % PRIVATE_AWS_IP[2],
             },
             
             { # server 4
                 "server_id"     :  4,
-                "client2server" :  "172.16.17.4:10101",
-                "server2client" :  "172.16.17.4:10202",
-                "server2server" :  "172.16.17.4:10303",
+                "server2client" :  "%s:8181" % PRIVATE_AWS_IP[3],
+                "client2server" :  "%s:8282" % PRIVATE_AWS_IP[3],
+                "server2server" :  "%s:8383" % PRIVATE_AWS_IP[3],
             },
             
             { # server 5
                 "server_id"     :  5,
-                "client2server" :  "172.16.17.5:11101",
-                "server2client" :  "172.16.17.5:11202",
-                "server2server" :  "172.16.17.5:11303",
+                "server2client" :  "%s:8181" % PRIVATE_AWS_IP[4],
+                "client2server" :  "%s:8282" % PRIVATE_AWS_IP[4],
+                "server2server" :  "%s:8383" % PRIVATE_AWS_IP[4],
             },
           ]
+
+PUBLIC_AWS_IP = ["52.50.157.142", "54.154.152.152", "52.50.157.142", "54.154.152.152", "52.50.157.142"]
 
 SERVERS_AWS_PUBLIC = [
             { # server 1
                 "server_id"     :  1,
-                "server2client" :  "52.50.157.142:8181",
-                "client2server" :  "52.50.157.142:8282",
-                "server2server" :  "52.50.157.142:8383",
+                "server2client" :  "%s:8181" % PUBLIC_AWS_IP[0],
+                "client2server" :  "%s:8282" % PUBLIC_AWS_IP[0],
+                "server2server" :  "%s:8383" % PUBLIC_AWS_IP[0],
             },
 
             { # server 2
                 "server_id"     :  2,
-                "server2client" :  "54.154.152.152:9191",
-                "client2server" :  "54.154.152.152:9292",
-                "server2server" :  "54.154.152.152:9393",
+                "server2client" :  "%s:8181" % PUBLIC_AWS_IP[1],
+                "client2server" :  "%s:8282" % PUBLIC_AWS_IP[1],
+                "server2server" :  "%s:8383" % PUBLIC_AWS_IP[1],
             },
             
             { # server 3
                 "server_id"     :  3,
-                "server2client" :  "172.16.17.3:7191",
-                "client2server" :  "172.16.17.3:7292",
-                "server2server" :  "172.16.17.3:7393",
+                "server2client" :  "%s:8181" % PUBLIC_AWS_IP[2],
+                "client2server" :  "%s:8282" % PUBLIC_AWS_IP[2],
+                "server2server" :  "%s:8383" % PUBLIC_AWS_IP[2],
             },
             
             { # server 4
                 "server_id"     :  4,
-                "client2server" :  "172.16.17.4:10101",
-                "server2client" :  "172.16.17.4:10202",
-                "server2server" :  "172.16.17.4:10303",
+                "server2client" :  "%s:8181" % PUBLIC_AWS_IP[3],
+                "client2server" :  "%s:8282" % PUBLIC_AWS_IP[3],
+                "server2server" :  "%s:8383" % PUBLIC_AWS_IP[3],
             },
             
             { # server 5
                 "server_id"     :  5,
-                "client2server" :  "172.16.17.5:11101",
-                "server2client" :  "172.16.17.5:11202",
-                "server2server" :  "172.16.17.5:11303",
+                "server2client" :  "%s:8181" % PUBLIC_AWS_IP[4],
+                "client2server" :  "%s:8282" % PUBLIC_AWS_IP[4],
+                "server2server" :  "%s:8383" % PUBLIC_AWS_IP[4],
             },
           ]
 
@@ -135,9 +141,9 @@ TRAILING_01_STATE = 1
 TEMP_STATE = 9
 
 # TSS Delay
-TRAILING_01_DELAY = 800
-RELAX_TSS_ORDER_CHECKING = False
-MSG_LATE_DELAY_BUDGET = 100
+TRAILING_01_DELAY = 500
+RELAX_TSS_ORDER_CHECKING = True
+MSG_LATE_DELAY_BUDGET = 50
 
 # various delays in ms
 GAMESTATE_PUBLISH_DELAY = 500.0

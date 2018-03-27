@@ -2,12 +2,19 @@ import sys
 from server.Server import Server
 from common.settings import *
 
-servers = SERVERS_LOCAL # let's use localhost setting
+if AWS_MODE_FLAG:
+    servers = SERVERS_AWS_PRIVATE
+else:
+    servers = SERVERS_LOCAL
+    
 server_id = 1
 verbose = False
 
 if len(sys.argv) == 2:
     server_id = int(sys.argv[1])
+else:
+    print "usage: python -m server.run_server <server_id>"
+    sys.exit()
 
 peers = []
 host = {}
