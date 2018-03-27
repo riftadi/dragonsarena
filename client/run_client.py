@@ -65,7 +65,10 @@ if __name__ == '__main__':
             # c.wait_for_initial_gamestate()
 
         c.update_bot_gamestate()
-        time.sleep(1)
+        try:
+            time.sleep(1)
+        except KeyboardInterrupt:
+            break
 
     c.stop_gamestate_updater()
     c.terminate()
