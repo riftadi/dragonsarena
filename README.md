@@ -44,23 +44,21 @@ Emergency stop command to stop the game (hopefully not needed), tested in Mac OS
 Other than that, to start an observer manually we can use this command:
 
 ```
-python -m client.Observer <publisher_url>
+python -m client.Observer <idx of server_list>
 example:
-python -m client.Observer 127.0.0.1:8181
+python -m client.Observer 0
 ```
 
 To start a human player manually:
 
 ```
-python -m client.run_client <publisher_url> <command_url>
+python -m client.run_client <player_type> <player_id> <idx of server_list>
 example:
-python -m client.run_client 127.0.0.1:8181 127.0.0.1:8282
+python -m client.run_client human id_5 1
 ```
 
 To start a dragon player manually:
 
 ```
-python -m client.run_client <publisher_url> <command_url> dragon
-example:
-python -m client.run_client 127.0.0.1:8181 127.0.0.1:8282 dragon
+python -m client.run_client dragon
 ```

@@ -2,15 +2,63 @@
 
 ![Image of Architecture](img/architecture.png)
 
+![Classes design of Dragons Arena](img/da_design.png)
+
+
+# Game Flow
+## Client
+### Dragon/Human
+- chose randomly one server as their main connection to the game
+- listen to the publisher of that server
+- has unique id which does not change after restar
+- sends spawn message after start
+- runs bot
+- starts sending commands once it sees it's own id in the received gamestate
+
+### GUI/Observer
+- chose one server for gamestate
+- renders gamestate and closes gui after receiving game over state
+
+## Server
+- has two publisher (for possible commands see [README.md](README.md))
+- has one server for receiving commands of connected clients (connection is stateless)
+- when receiving a normal command (except spawn). Tag it with internal clock and publishes it. 
+- has message buffer which is emptied after the TSS if in the past
+- has a TSS engine which runs the game with a difference of 100ms each
+- has spawning component which runs outside the TSS engine and looks for a free spot in the leading state and proposes this to the others. This component buffers the spawning messages till it has agreed on a spawning place.
+
+# Fault tolerance
+
+## Server fault
+- server
+    - a server which crashes can not come back 
+    - server publishes heartbeat per gameloop
+    - if the other server don't hear anything for a certain time they exclude the server from voting for new
+- client
+    - timeout for each command send
+    - runs out means switching over to other server
+
+## Client fault
+- server
+    - each client sends a new command with a time interval
+    - when the server does not hear from a client it removes the player from the gameboard and put's it in a list
+    - does a new spawn with the same id happens the old gamestate get's applied
+- client
+    - if still on the gameboard the bot just sends new commands
+    - if it has been taken out the game
+    - client stops publishing new commands
+    - has to come back with same id to continue
+    - bot continues proposing new commands once it sees 
+
 
 # Client --> Server Communication
 ## Spawn Action
-When a client joins the game he sends a spawn message with his client id. The id is uuid v4 and therefore random. On the server side, the character gets added to the gameboard with the initial coordinates.
+When a client joins the game he sends a spawn message with his client id. The id has to be unique over the game. On the server side, the character gets added to the gameboard with the initial coordinates.
 
 ```json
 {
     "type" : "spawn",
-    "player_id" : "uuid4 in hex format",
+    "player_id" : "unique id",
     "player_type" : "human or dragon"
 }
 ```
@@ -21,8 +69,8 @@ A human player can help a nearby friend by healing him. For that the id of the f
 ```json
 {
     "type" : "heal",
-    "player_id" : "client uuid",
-    "target_id" : "friend uuid",
+    "player_id" : "client unique id",
+    "target_id" : "friend unique id",
 }
 ```
 
@@ -32,7 +80,7 @@ Human players can move on the gameboard. The client proposes the new coordinates
 ```json
 {
     "type" : "move",
-    "player_id" : "client uuid",
+    "player_id" : "client unique id",
     "x" : "new x coordinate",
     "y" : "new y coordinate"
 }
@@ -44,15 +92,17 @@ Both human and dragons can attack the counter character type each turn.
 ```json
 {
     "type" : "attack",
-    "player_id" : "client uuid",
-    "target_id" : "enemy uuid",
+    "player_id" : "client unique id",
+    "target_id" : "enemy unique id",
 }
 ```
 
 # Server --> Server and Server --> Client communication
 The communication between Server and Server plus Server and Client uses the publish/subscribe pattern. The Server published messages with different topics and the subscriber can decide to which topic to listen
 
-## topic: gamestate
+The server has two publishers one for the gamestate directed to the client and another one for the server to server communication.
+
+## gamestate
 The gameengine publishes the current gamestate in a json format every iteration. For that the current list of alive players is published. The client listens to this event and creates a new game state out of this information and updates the bot plus the graphical user interface (gui).
 
 ```json
@@ -60,16 +110,11 @@ The gameengine publishes the current gamestate in a json format every iteration.
     "x": "x coordinate of player",
     "y": "y coordinate of player",
     "hp": "current amount of health points",
-    "max_hp": "",
+    "max_hp": "maximal amount of health points",
     "type": "h(uman) or d(ragon)",
-    "id": "player uuid"
+    "id": "player unique id"
 }]
 ```
-
-## topic: gameover
-Notifies interested subscriber that the current played game is over. Servers also listen to it to shutdown the game.
-
-*(Adi: do we still need this? all the published gamestate messages contains already game running status)*
 
 ## topic: command
 When a server receives a command from the client it immediatly pubilshes it with the topic ```command```. It adds the ```timestamp``` property to the JSON message that the other server can sort it within there TSS engine.
@@ -77,36 +122,39 @@ When a server receives a command from the client it immediatly pubilshes it with
 ```json
 {
     "timestamp": "local progress",
-    "type": "<whatever_action_type>"
+    "type": "<heal, attack, move>"
 }
 ```
 
 ## topic: alive
 send a heartbeat once in the gameloop to tell the other servers that oneself is alive. Other server can declare one as dead and therefore are not waiting a response for the commit process for spawning and starting time of the game.
+
+```json
 {
-    "id": "server adress,
-    "time: "current gametime"
+    "id": "server adress",
+    "time": "current gametime"
     
 }
+```
 
 ## topic: spawn
-Use a two phase commit for making sure that a player can spawn safely. The server who has a client which wants to spawn get's coordinates for new player and locks is locally (means that a move coordinate to this coordinate is refused). It afterwards proposes these coordinates to all other players and waits a vote message of them in order to commit it afterwards. As soon as there is one abort it tries a new coordinate.
+It uses a two-phase commit for making sure that a player can spawn safely. The server who has a client which wants to spawn get's coordinates for a new player and locks it locally (means that a move to this coordinate is refused). It afterwards proposes these coordinates to all other players and waits for a vote message of them in order to commit it afterwards. As soon as there is one abort it tries a new coordinate.
 
-It may be that we can don't need the last commit message as all servers a listen to the vote anyway (or we use one to one messages for that). The heartbeat (alive topic) can be used to know for how many vote messages to wait.
-
-```
+The spawn can be for a client which connects for the first time or respawns with it's previous amount of hp.
+```json
 {
     "type": "proposal",
-    "player_id": "id of new player",
-    "player_type: "human or dragon",
+    "player_id": "unique id of new player",
+    "player_type": "human or dragon",
     "x": "proposed x coordinate",
     "y": "proposed y coordinate",
-    "hp": "hp of new character",
+    "hp": "current hp of new character",
+    "max_hp": "hp of new character",
     "ap": "ap of new character"
 }
 ```
 
-```
+```json
 {
     "type": "vote",
     "vote": "yes or no (bool)",
@@ -114,7 +162,7 @@ It may be that we can don't need the last commit message as all servers a listen
 }
 ```
 
-```
+```json
 {
     "type": "commit",
     "success": "bool indicates commit or rollback",
@@ -123,39 +171,6 @@ It may be that we can don't need the last commit message as all servers a listen
     "eventstamp": "new event time for TSS in other server"
 }
 ```
-
-# Game Flow
-## Client
-### Dragon/Human
-- chose randomly one server as there main connection to the game
-- listen to the publisher of that server
-- topic alive: if the no answer for two long switch over to another server
-- has unique id which does not change after restart (may be uuid written to file)
-- sends spawn message after start
-- runs bot
-- but starts sending commands once it sees it's own id in the received gamestate
-
-### GUI
-- chose one server for gamestate
-- renders gamestate and closes gui after receiving game over state
-
-## Server
-- after server startup it tries to commit to one chosen beginning timestamp from which the internal clock starts 
-- has one publisher (for possible commands see [README.md](README.md))
-- has one server for receiving commands of connected clients (connection is stateless)
-- when receiving a normal command (except spawn). Tag it with internal clock and publishes it. 
-- has message buffer which is emptied after the TSS if in the past
-- has a TSS engine which runs the game with a difference of 100ms each
-- has spawning component which runs outside the TSS engine and looks for a free spot in the leading state and proposes this to the others. This component buffers the spawning messages till it has chosen a start time.
-
-### handling server fault
-- server publishes heartbeat per gameloop
-- if the other server don't hear anything for a certain time they exclude the server from voting for new
-
-- on server restart the server waits for the heartbeats of other servers, when one has a valid timestamp then it know that he was down.
-- has to queue all messages it listens from the other server till it got the past gamestate of the other server
-  - either get a copy of the gamestate
-  - or get the history of all commands and make a replay
 
 # Modules Organization
 
