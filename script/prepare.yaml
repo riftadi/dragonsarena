@@ -1,6 +1,13 @@
 ---
 - hosts: aws
 
+# save the signature
+# ssh-keyscan -H 34.245.150.134 >> ~/.ssh/known_hosts
+# ssh-keyscan -H 34.244.251.145 >> ~/.ssh/known_hosts
+# ssh-keyscan -H 52.211.170.14 >> ~/.ssh/known_hosts
+# ssh-keyscan -H 34.242.219.187 >> ~/.ssh/known_hosts
+# ssh-keyscan -H 54.246.154.116 >> ~/.ssh/known_hosts
+
 # for first time install python use this command:
 # ansible aws -i script/hosts --sudo -m raw -a "apt-get install -y python python-simplejson"
 
