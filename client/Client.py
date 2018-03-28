@@ -16,11 +16,20 @@ class Client(object):
         self.gsu = GameStateUpdater(zmq_context=self.zmq_root_context, publisher_url=self.publisher_url)
         self.gsu.start()
         self.msg_sender = ClientSideCommandSender(zmq_context=self.zmq_root_context, command_url=self.command_url)
-
-        # spawn our character
         self.player_id = player_id
         self.player_type = player_type[0] # only pick its first char ('h' or 'd')
-        self.spawn_character()
+
+        # await one gamestate of server
+        while self.gsu.received() is False:
+            time.sleep(0.0001)
+            continue
+        
+        # check if player is part of the game
+        player_obj = self.gsu.get_gamestate().get_object_by_id(self.player_id)
+
+        if player_obj is None:
+            # spawn our character
+            self.spawn_character()
 
         self.verbose = verbose
 

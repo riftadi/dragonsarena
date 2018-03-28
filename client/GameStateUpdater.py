@@ -23,6 +23,7 @@ class GameStateUpdater(threading.Thread):
         self.subscriber_non_blocking = SocketWrapper(self.subscriber)
         self.last_gamestate_update_time = 0
         self.server_timeout_flag = False
+        self.counter = 0
 
         self.quit_flag = False
 
@@ -32,6 +33,7 @@ class GameStateUpdater(threading.Thread):
             try:
                 message = self.subscriber_non_blocking.recv(timeout=CLIENTSIDE_UPDATE_TIMEOUT)
             except:
+                print "timeout"
                 self.server_timeout_flag = True
                 continue
 
@@ -44,12 +46,18 @@ class GameStateUpdater(threading.Thread):
 
                 if game_running_flag == False:
                     self.stop()
+                self.counter = self.counter + 1
 
             # other topic goes here, if any
 
             time.sleep(self.update_delay/1000.0)
 
         self.subscriber.close()
+
+    def received(self):
+        if self.counter > 0:
+            return True
+        return False
 
     def is_server_timeout(self):
         return self.server_timeout_flag
