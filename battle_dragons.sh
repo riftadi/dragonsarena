@@ -1,13 +1,15 @@
 #!/bin/bash
+amount=2
+if [[ "$1" != "" ]]; then
+    amount="$1"
+fi
 
-# python -m client.Observer 127.0.0.1:8181 &
-# python -m client.Observer 127.0.0.1:9191 &
-# python -m client.Observer 127.0.0.1:7191 &
-
-python -m client.Observer 34.244.190.223:8181 &
-python -m client.Observer 52.209.25.212:8181 &
+for observer in $(seq $amount)
+do
+    python -m client.Observer $(($observer-1)) &
+done
 
 for run in {1..20}
 do
- python -m client.run_client dragon &
+    python -m client.run_client dragon &
 done
