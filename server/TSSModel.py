@@ -44,6 +44,11 @@ class TSSModel(object):
         self.client_last_seen_time[pl_id] = self.game_timer
         self.lock.release()
 
+    def unset_client_last_seen_time(self, pl_id):
+        self.lock.acquire()
+        self.client_last_seen_time.pop(pl_id, None)
+        self.lock.release()
+
     def get_client_last_seen_time(self, pl_id):
         # get last seen time of player pl_id
         # return None if it doesn't exist
@@ -234,6 +239,7 @@ class TSSModel(object):
             # a player is offline
             obj_id = action["player_id"]
             state.make_offline(obj_id)
+            self.unset_client_last_seen_time(obj_id)
 
         elif action_type == "move":
             # move a character
