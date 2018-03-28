@@ -56,6 +56,7 @@ class GUIDisplay(object):
             self.draw_screen(boardstring)
             pygame.time.wait(self.display_delay)
 
+        self.gsu.stop()
         self.gsu.join()
         self.zmq_root_context.term()
         pygame.quit()
