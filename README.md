@@ -1,7 +1,7 @@
 # Dragons Arena: Warriors vs Dragons RTS Game
 
 Dragons Arena is online warfare game between computer-controlled dragons and hundreds of virtual knights (avatars or real-life humans).
-This game is developed as an labwork assignment in [TU Delft's](https://www.tudelft.nl/) IN4391 *Distributed Computing Systems* course. The course is/was scheduled in Q3 of academic year 2017/18.
+This game was initially developed as a labwork assignment in [TU Delft's](https://www.tudelft.nl/) IN4391 *Distributed Computing Systems* course. The course was scheduled in Q3 of academic year 2017/18.
 
 Dragons Arena employs Trailing State Synchronization [^1] algorithm to synchronize action messages between peer-to-peer servers.
 
@@ -14,10 +14,9 @@ The comprehensive design of this game is available in the [design document](DESI
 ![Screenshot of Dragons Arena](img/da_screenshot.png)
 
 We have at most 5 mirrored server components.
-Various parameters can be configured in `common/setting.py`.
+Various parameters can be configured in `common/settings.py`.
 
 All of the commands below should be run from the root directory of `dragonsarena`.
-
 
 For starting the first server:
 
