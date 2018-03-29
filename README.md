@@ -13,7 +13,9 @@ The comprehensive design of this game is available in the [design document](DESI
 
 ![Screenshot of Dragons Arena](img/da_screenshot.png)
 
-Right now, we have dual server components.
+We have at most 5 mirrored server components.
+Various parameters can be configured in `common/setting.py`.
+
 All of the commands below should be run from the root directory of `dragonsarena`.
 
 
