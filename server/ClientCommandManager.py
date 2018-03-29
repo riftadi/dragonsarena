@@ -1,5 +1,6 @@
 import zmq
 import json
+import logging
 import time
 import uuid
 from threading import Thread

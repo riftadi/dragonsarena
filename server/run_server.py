@@ -1,4 +1,6 @@
 import sys
+import time
+import logging
 from server.Server import Server
 from common.settings import *
 
@@ -26,11 +28,18 @@ for i in xrange(N_SERVERS):
     else:
         peers.append(servers[i])
 
-print "Starting Dragons Arena server %d.." % server_id
+logging.basicConfig(filename='da-s%d-%d.log' % (server_id, int(round(time.time() * 1000))), \
+			 		format='%(asctime)s.%(msecs)03d\t%(levelname)s\t%(message)s', \
+			 		datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
+msg = "Starting Dragons Arena server %d.." % server_id
+logging.info(msg)
+print msg
 
 S = Server(server_id=server_id, host=host, peers=peers, verbose=verbose)
 
 # go into main loop
 S.mainloop()
 
-print "Server process exits.."
+msg = "Server process exits.."
+logging.info(msg)
+print msg
