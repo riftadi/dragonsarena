@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 import uuid
 from threading import Thread
@@ -58,7 +59,9 @@ class TSSManager(Thread):
 
             if not is_consistent:
                 # there is inconsistency detected
-                print "inconsistency detected!! duplicating trailing state.."
+                incmsg = "inconsistency detected!! duplicating trailing state.."
+                print incmsg
+                logging.info(incmsg)
 
                 # repair our leadingstate
                 # rollback to trailing01 state and re-executes commands until current time
@@ -126,7 +129,9 @@ class TSSManager(Thread):
 
         if len(unactive_player_ids) > 0:
             for unpid in unactive_player_ids:
-                print "player %s offline, saving state.." % unpid
+                offmsg = "player %s offline, saving state.." % unpid
+                print offmsg
+                logging.info(offmsg)
                 msg = {}
                 msg["player_id"] = unpid
                 msg["type"] = "off"

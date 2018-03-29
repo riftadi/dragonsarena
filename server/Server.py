@@ -1,3 +1,4 @@
+import logging
 import time
 import zmq
 
@@ -62,7 +63,9 @@ class Server(object):
                 self.T.stop_game()
                 break
 
-        print "Ending games.."
+        msg_end = "Ending games.."
+        print msg_end
+        logging.info(msg_end)
         # give a few seconds delay to give opportunity for publisher_worker to broadcast
         # that the game is already finished
         time.sleep(WAIT_DELAY_AFTER_GAME_END/1000)

@@ -185,7 +185,7 @@ class GameState(object):
         obj_id = obj.get_obj_id()
         prev_state = self.get_offline_player_state_by_id(obj_id)
         if prev_state != None:
-            print "player %s is back" %(obj_id)
+            print "player %s is back online" %(obj_id)
             self.mark_online(obj_id)
 
         # add to gameboard
@@ -264,4 +264,3 @@ class GameState(object):
                 else:
                     # there is someone there
                     if self.verbose: print "..blocked by %s (%d, %d)" % (obj.get_name(), obj.get_x(),obj.get_y())
-

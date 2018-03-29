@@ -1,5 +1,6 @@
 from threading import Thread, Lock
 import copy
+import logging
 import pygame
 import time
 import json
@@ -68,7 +69,7 @@ class TSSModel(object):
                     if obj.get_type() == 'h' and val < boundary_time:
                         result.append(key)
         except RuntimeError as e:
-            print e
+            logging.warning(str(e))
         finally:
             self.lock.release()
                     
@@ -156,10 +157,14 @@ class TSSModel(object):
             gs = self.get_leadingstate()
 
             if gs.get_dragon_count() == 0 and gs.get_human_count() > 0:
-                print "Humans win!"
+                msg = "Humans win!"
+                print msg
+                logging.info(msg)
                 state = False
             elif gs.get_dragon_count() > 0 and gs.get_human_count() == 0:
-                print "Dragons win!"
+                msg = "Dragons win!"
+                print msg
+                logging.info(msg)
                 state = False
 
         self.game_running_flag = state
@@ -180,13 +185,17 @@ class TSSModel(object):
         # check which state the action is going to be applied to
         # state_id possible values: leading (0), trailing1 (1)
         state = None
+        state_name = ""
 
         if state_id == LEADING_STATE:
             state = self.leadingstate
+            state_name = "leadingstate"
         elif state_id == TRAILING_01_STATE:
             state = self.trailingstate01
+            state_name = "trailingstate01"
         elif state_id == TEMP_STATE:
             state = self.tempstate
+            state_name = "tempstate"
 
         # save action for checking purpose in the trailing states
         state.add_action(action)
@@ -218,9 +227,11 @@ class TSSModel(object):
             if obj_type == 'h':
                 new_obj = Human(obj_id, obj_name,
                     hp, max_hp, ap, x, y, verbose=self.verbose)
+                logging.info("[%s] player %s is spawned" % (state_name, obj_id))
             elif obj_type == 'd':
                 new_obj = Dragon(obj_id, obj_name,
                     hp, max_hp, ap, x, y, verbose=self.verbose)
+                logging.info("[%s] dragon %s is spawned" % (state_name, obj_id))
 
             state.add_character(new_obj)
 
@@ -240,6 +251,7 @@ class TSSModel(object):
             obj_id = action["player_id"]
             state.make_offline(obj_id)
             self.unset_client_last_seen_time(obj_id)
+            logging.info("[%s] %s is offline" % (state_name, obj_id))
 
         elif action_type == "move":
             # move a character
@@ -250,6 +262,7 @@ class TSSModel(object):
 
             if self.collide_with_locked(x,y) == False:
                 obj = state.move(obj_id, x, y)
+                logging.info("[%s] %s move to (%d,%d)" % (state_name, obj_id, x, y))
 
         elif action_type == "attack":
             # attack a character
@@ -257,6 +270,7 @@ class TSSModel(object):
             target_id = action["target_id"]
 
             state.attack(obj_id, target_id)
+            logging.info("[%s] %s is attacked by %s" % (state_name, obj_id, target_id))
 
         elif action_type == "heal":
             # heal a character
@@ -264,6 +278,7 @@ class TSSModel(object):
             target_id = action["target_id"]
 
             state.heal(obj_id, target_id)
+            logging.info("[%s] %s is healed by %s" % (state_name, obj_id, target_id))
 
     def process_action_list(self, action_list, state_id=LEADING_STATE):
         for action in action_list:

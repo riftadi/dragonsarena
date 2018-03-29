@@ -1,0 +1,8 @@
+---
+- hosts: aws
+
+  tasks:
+  - name: Delete dragonsarena folder
+    file:
+      path: /home/ubuntu/dragonsarena
+      state: absent

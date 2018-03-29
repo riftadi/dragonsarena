@@ -1,5 +1,6 @@
 import zmq
 import json
+import logging
 import time
 import uuid
 from threading import Thread, Lock
@@ -160,7 +161,9 @@ class ServerCommandDuplicator(Thread):
                 continue
             if now - timestamp > 1:
                 self.heartbeat[key] = None
-                print "shuting down " + key
+                downmsg = "shuting down " + key
+                print downmsg
+                logging.info(downmsg)
                 self.subscriptions[key].close()
                 self.subscriptions[key] = None
 
@@ -265,7 +268,9 @@ class ServerCommandDuplicator(Thread):
         prev_state = self.tss_model.get_offline_player_state_by_id(parsed_message["player_id"])
         if prev_state != None:
             # it is a returning client, get its information back
-            print "spawn character %s from saved state" % (parsed_message["player_id"])
+            rspmsg = "spawn character %s from saved state" % (parsed_message["player_id"])
+            print rspmsg
+            logging.info(rspmsg)
             parsed_message["hp"] = prev_state["hp"]
             parsed_message["max_hp"] = prev_state["max_hp"]
             parsed_message["ap"] = prev_state["ap"]
