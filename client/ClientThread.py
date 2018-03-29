@@ -52,7 +52,6 @@ class ClientThread(threading.Thread):
                 self.c.change_server(new_publisher_url=self.server["server2client"], new_command_url=self.server["client2server"])
 
             self.c.update_bot_gamestate()
-            time.sleep(1)
 
         self.c.stop_gamestate_updater()
         self.c.terminate()

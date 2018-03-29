@@ -185,6 +185,7 @@ class GameState(object):
         obj_id = obj.get_obj_id()
         prev_state = self.get_offline_player_state_by_id(obj_id)
         if prev_state != None:
+            print "player %s is back" %(obj_id)
             self.mark_online(obj_id)
 
         # add to gameboard
