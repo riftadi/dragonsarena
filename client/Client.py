@@ -55,8 +55,12 @@ class Client(object):
         self.gsu.start()
         self.msg_sender = ClientSideCommandSender(self.zmq_root_context, command_url=self.command_url)
 
-        # update bot
-        self.bot.change_workers(self.msg_sender, self.gsu)
+        # start our bot (automatic controller)
+        if self.player_type == 'h':
+            self.bot = HumanBot(self.player_id, self.msg_sender, self.gsu, self.verbose)
+        elif self.player_type == 'd':
+            self.bot = DragonBot(self.player_id, self.msg_sender, self.gsu, self.verbose)
+        self.bot.start()
 
     def spawn_character(self):
         msg = {
