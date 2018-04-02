@@ -59,7 +59,7 @@ class TSSManager(Thread):
 
             if not is_consistent:
                 # there is inconsistency detected
-                incmsg = "inconsistency detected!! duplicating trailing state.."
+                incmsg = "Inconsistency detected!! Duplicating trailing state.."
                 print incmsg
                 logging.info(incmsg)
 

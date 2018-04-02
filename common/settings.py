@@ -1,13 +1,13 @@
 # This file holds all settings in the game
 
 # Are we running on AWS?
-AWS_MODE_FLAG = True
+AWS_MODE_FLAG = False
 
 # How many servers should be running
-N_SERVERS = 5
+N_SERVERS = 2
 
 # Which servers (in server_ID) should the client connect to?
-CLIENTSIDE_SERVER_LIST = [1, 2, 3, 4, 5]
+CLIENTSIDE_SERVER_LIST = [1, 2]
 
 # Duration of gta game in seconds
 GTA_DURATION = 2 * 60
@@ -117,16 +117,16 @@ SERVERS_AWS_PUBLIC = [
             
             { # server 4
                 "server_id"     :  4,
-                "server2client" :  "%s:8181" % PUBLIC_AWS_IP[3],
-                "client2server" :  "%s:8282" % PUBLIC_AWS_IP[3],
-                "server2server" :  "%s:8383" % PUBLIC_AWS_IP[3],
+                "server2client" :  "%s:8187" % PUBLIC_AWS_IP[3],
+                "client2server" :  "%s:8288" % PUBLIC_AWS_IP[3],
+                "server2server" :  "%s:8389" % PUBLIC_AWS_IP[3],
             },
             
             { # server 5
                 "server_id"     :  5,
-                "server2client" :  "%s:8181" % PUBLIC_AWS_IP[4],
-                "client2server" :  "%s:8282" % PUBLIC_AWS_IP[4],
-                "server2server" :  "%s:8383" % PUBLIC_AWS_IP[4],
+                "server2client" :  "%s:8187" % PUBLIC_AWS_IP[4],
+                "client2server" :  "%s:8288" % PUBLIC_AWS_IP[4],
+                "server2server" :  "%s:8389" % PUBLIC_AWS_IP[4],
             },
           ]
 
@@ -141,14 +141,14 @@ TRAILING_01_STATE = 1
 TEMP_STATE = 9
 
 # TSS Delay
-TRAILING_01_DELAY = 500
+TRAILING_01_DELAY = 100
 RELAX_TSS_ORDER_CHECKING = True
 MSG_LATE_DELAY_BUDGET = 50
 
 # various delays in ms
 GAMESTATE_PUBLISH_DELAY = 500.0
-SERVERSIDE_CLIENT_TIMEOUT = 3000
-CLIENTSIDE_UPDATE_TIMEOUT = 5000
+SERVERSIDE_CLIENT_TIMEOUT = 6000
+CLIENTSIDE_UPDATE_TIMEOUT = 3000
 GAMECLOCK_UPDATE_DELAY = 10.0
 SERVER_MAIN_LOOP_DELAY = 500.0
 WAIT_DELAY_AFTER_GAME_END = 5000
